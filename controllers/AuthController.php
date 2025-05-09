@@ -1,6 +1,6 @@
 <?php
 
-require_once '../app/Models/User.php';
+require_once '../app/Models/Student.php';
 
 class AuthController
 {
@@ -24,7 +24,7 @@ class AuthController
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Nettoyage des entrées
-            $username = trim($_POST['username'] ?? '');
+            $Studentname = trim($_POST['Studentname'] ?? '');
             $password = $_POST['password'] ?? '';
             $role = $_POST['role'] ?? '';
             $filiere = $_POST['filiere'] ?? '';
@@ -33,7 +33,7 @@ class AuthController
             // Validation
             $errors = [];
             
-            if (empty($username) || strlen($username) < 3) {
+            if (empty($Studentname) || strlen($Studentname) < 3) {
                 $errors[] = 'Le nom d\'utilisateur doit contenir au moins 3 caractères.';
             }
             
@@ -56,7 +56,7 @@ class AuthController
             if (!empty($errors)) {
                 $_SESSION['error'] = implode('<br>', $errors);
                 $_SESSION['old'] = [
-                    'username' => $username,
+                    'Studentname' => $Studentname,
                     'email' => $email,
                     'role' => $role,
                     'filiere' => $filiere
@@ -66,11 +66,11 @@ class AuthController
             }
 
             // Vérification de l'unicité de l'utilisateur
-            $userModel = new User();
-            if ($userModel->findByUsername($username)) {
+            $StudentModel = new Student();
+            if ($StudentModel->findByStudentname($Studentname)) {
                 $_SESSION['error'] = 'Un compte avec ce nom d\'utilisateur existe déjà.';
                 $_SESSION['old'] = [
-                    'username' => $username,
+                    'Studentname' => $Studentname,
                     'email' => $email,
                     'role' => $role,
                     'filiere' => $filiere
@@ -79,10 +79,10 @@ class AuthController
                 exit;
             }
             
-            if ($userModel->findByEmail($email)) {
+            if ($StudentModel->findByEmail($email)) {
                 $_SESSION['error'] = 'Un compte avec cette adresse email existe déjà.';
                 $_SESSION['old'] = [
-                    'username' => $username,
+                    'Studentname' => $Studentname,
                     'email' => $email,
                     'role' => $role,
                     'filiere' => $filiere
@@ -93,8 +93,8 @@ class AuthController
 
             // Enregistrement de l'utilisateur
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-            $userId = $userModel->create([
-                'username' => $username,
+            $StudentId = $StudentModel->create([
+                'Studentname' => $Studentname,
                 'email' => $email,
                 'password' => $hashedPassword,
                 'role' => $role,
@@ -102,7 +102,7 @@ class AuthController
                 'created_at' => date('Y-m-d H:i:s')
             ]);
 
-            if ($userId) {
+            if ($StudentId) {
                 $_SESSION['success'] = 'Inscription réussie. Vous pouvez maintenant vous connecter.';
                 header('Location: /auth/login');
                 exit;
@@ -121,7 +121,7 @@ class AuthController
     public function showLoginForm()
     {
         // Vérification si l'utilisateur est déjà connecté
-        if (isset($_SESSION['user_id'])) {
+        if (isset($_SESSION['Student_id'])) {
             header('Location: /');
             exit;
         }
@@ -138,27 +138,27 @@ class AuthController
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Nettoyage des entrées
-            $username = trim($_POST['username'] ?? '');
+            $Studentname = trim($_POST['Studentname'] ?? '');
             $password = $_POST['password'] ?? '';
             $remember = isset($_POST['remember']);
 
-            $userModel = new User();
+            $StudentModel = new Student();
             
-            // Recherche par email ou username
-            if (filter_var($username, FILTER_VALIDATE_EMAIL)) {
-                $user = $userModel->findByEmail($username);
+            // Recherche par email ou Studentname
+            if (filter_var($Studentname, FILTER_VALIDATE_EMAIL)) {
+                $Student = $StudentModel->findByEmail($Studentname);
             } else {
-                $user = $userModel->findByUsername($username);
+                $Student = $StudentModel->findByStudentname($Studentname);
             }
 
-            if ($user && password_verify($password, $user['password'])) {
+            if ($Student && password_verify($password, $Student['password'])) {
                 // Régénération de l'ID de session pour prévenir les attaques de fixation
                 session_regenerate_id(true);
                 
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_role'] = $user['role'];
-                $_SESSION['user_email'] = $user['email'];
-                $_SESSION['user_username'] = $user['username'];
+                $_SESSION['Student_id'] = $Student['id'];
+                $_SESSION['Student_role'] = $Student['role'];
+                $_SESSION['Student_email'] = $Student['email'];
+                $_SESSION['Student_Studentname'] = $Student['Studentname'];
 
                 // Option "Se souvenir de moi"
                 if ($remember) {
@@ -166,11 +166,11 @@ class AuthController
                     $expires = time() + 60 * 60 * 24 * 30; // 30 jours
                     
                     setcookie('remember_token', $token, $expires, '/', '', true, true);
-                    $userModel->updateRememberToken($user['id'], $token, date('Y-m-d H:i:s', $expires));
+                    $StudentModel->updateRememberToken($Student['id'], $token, date('Y-m-d H:i:s', $expires));
                 }
 
                 // Redirection en fonction du rôle
-                switch ($user['role']) {
+                switch ($Student['role']) {
                     case 'etudiant':
                         $redirect = '/etudiant/dashboard';
                         break;
@@ -202,8 +202,8 @@ class AuthController
     {
         // Suppression du token "Se souvenir de moi" si existant
         if (isset($_COOKIE['remember_token'])) {
-            $userModel = new User();
-            $userModel->updateRememberToken($_SESSION['user_id'], null, null);
+            $StudentModel = new Student();
+            $StudentModel->updateRememberToken($_SESSION['Student_id'], null, null);
             setcookie('remember_token', '', time() - 3600, '/');
         }
         

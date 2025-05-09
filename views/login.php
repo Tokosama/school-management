@@ -1,7 +1,7 @@
 <?php
 // Si l'utilisateur est déjà connecté, on redirige vers le dashboard
 session_start();
-if (isset($_SESSION['user_id'])) {
+if (isset($_SESSION['Student_id'])) {
     header('Location: index.php?action=dashboard');
     exit();
 }
@@ -23,8 +23,8 @@ if (isset($_SESSION['user_id'])) {
         <h2>Connexion</h2>
         <form action="index.php?action=login" method="POST">
             <div class="input-group">
-                <label for="username">Nom d'utilisateur</label>
-                <input type="text" name="username" required>
+                <label for="Studentname">Nom d'utilisateur</label>
+                <input type="text" name="Studentname" required>
             </div>
             <div class="input-group">
                 <label for="password">Mot de passe</label>

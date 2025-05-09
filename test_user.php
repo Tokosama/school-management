@@ -1,20 +1,20 @@
 <?php
-// test_user.php
+// test_Student.php
 
-require_once __DIR__ . '/models/User.php';
+require_once __DIR__ . '/models/Student.php';
 require_once __DIR__ . '/models/Project.php';
 require_once __DIR__ . '/models/Notification.php';
 require_once __DIR__ . '/models/Teacher.php';
 
 // Initialisation des modèles
-$userModel = new User();
+$StudentModel = new Student();
 $projectModel = new Project();
 $notificationModel = new Notification();
 $teacherModel = new Teacher();
 
 // Enregistrement d'un enseignant
 echo "Enregistrement d'un enseignant...\n";
-if ($userModel->register('enseignant1', 'motdepasse123', 'teacher', 'AL,SI')) {
+if ($StudentModel->register('enseignant1', 'motdepasse123', 'teacher', 'AL,SI')) {
     echo "✅ Enseignant enregistré avec succès.\n";
 } else {
     echo "❌ Échec de l'enregistrement de l'enseignant.\n";
@@ -22,7 +22,7 @@ if ($userModel->register('enseignant1', 'motdepasse123', 'teacher', 'AL,SI')) {
 
 // Enregistrement d'un étudiant
 echo "Enregistrement d'un étudiant...\n";
-if ($userModel->register('etudiant1', 'motdepasse123', 'student')) {
+if ($StudentModel->register('etudiant1', 'motdepasse123', 'student')) {
     echo "✅ Étudiant enregistré avec succès.\n";
 } else {
     echo "❌ Échec de l'enregistrement de l'étudiant.\n";
@@ -30,7 +30,7 @@ if ($userModel->register('etudiant1', 'motdepasse123', 'student')) {
 
 // Connexion de l'étudiant
 echo "Connexion de l'étudiant...\n";
-$student = $userModel->login('etudiant1', 'motdepasse123');
+$student = $StudentModel->login('etudiant1', 'motdepasse123');
 if ($student) {
     echo "✅ Connexion réussie. ID de l'étudiant : " . $student['id'] . "\n";
 
@@ -81,7 +81,7 @@ echo "Récupération de la liste des enseignants...\n";
 $teachers = $teacherModel->getAll();
 if (!empty($teachers)) {
     foreach ($teachers as $teacher) {
-        echo "👨‍🏫 Enseignant : " . $teacher['username'] . " | Domaine : " . $teacher['domain'] . "\n";
+        echo "👨‍🏫 Enseignant : " . $teacher['Studentname'] . " | Domaine : " . $teacher['domain'] . "\n";
     }
 } else {
     echo "Aucun enseignant trouvé.\n";

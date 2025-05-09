@@ -2,14 +2,12 @@
 // app/Models/Admin.php
 
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/User.php';
 require_once __DIR__ . '/Teacher.php';
 require_once __DIR__ . '/Project.php';
 require_once __DIR__ . '/Notification.php';
 
 class Admin {
     private $pdo;
-    private $userModel;
     private $teacherModel;
     private $projectModel;
     private $notificationModel;
@@ -17,21 +15,46 @@ class Admin {
     public function __construct() {
         global $pdo;
         $this->pdo = $pdo;
-        $this->userModel = new User();
         $this->teacherModel = new Teacher();
         $this->projectModel = new Project();
         $this->notificationModel = new Notification();
+
+        $this->createTable(); // Assure la création de la table admin
+    }
+
+    /**
+     * Création de la table admin si elle n'existe pas
+     */
+    private function createTable() {
+        $this->pdo->exec("
+            CREATE TABLE IF NOT EXISTS admins (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL
+            );
+        ");
+    }
+
+    /**
+     * Création d'un compte admin
+     */
+    public function createAdmin($username, $password) {
+        $stmt = $this->pdo->prepare("INSERT INTO admins (username, password) VALUES (?, ?)");
+        return $stmt->execute([
+            $username,
+            password_hash($password, PASSWORD_DEFAULT)
+        ]);
     }
 
     /**
      * Gestion des enseignants
      */
-    public function createTeacher($Nom, $prenom, $email,$role, $domains) {
-        return $this->teacherModel->create($Nom, $prenom, $email,$role, $domains);
+    public function createTeacher($username, $domains) {
+        return $this->teacherModel->create($username, $domains);
     }
 
-    public function updateTeacher( $Nom, $prenom, $email,$role, $domains) {
-        return $this->teacherModel->update( $Nom, $prenom, $email,$role, $domains);
+    public function updateTeacher($username, $domains) {
+        return $this->teacherModel->update($username, $domains);
     }
 
     public function deleteTeacher($id) {
@@ -76,16 +99,16 @@ class Admin {
         if ($success) {
             // Notifier l'étudiant
             $this->notificationModel->create(
-                $_SESSION['user_id'],
-                "Votre projet '{$project['title']}' a été affecté à {$teacher['Nom']} {$teacher['prenom']}",
+                $_SESSION['Student_id'],
+                "Votre projet '{$project['theme']}' a été affecté à {$teacher['username']}",
                 'student',
                 $projectId
             );
             
             // Notifier l'enseignant
             $this->notificationModel->create(
-                $_SESSION['user_id'],
-                "Vous avez été assigné au projet '{$project['title']}'",
+                $_SESSION['Student_id'],
+                "Vous avez été assigné au projet '{$project['theme']}'",
                 'teacher',
                 $projectId
             );
@@ -110,20 +133,10 @@ class Admin {
     /**
      * Gestion des utilisateurs
      */
-    public function createUser($username, $email, $password, $role, $domain = null) {
-        return $this->userModel->create([
-            'username' => $username,
-            'email' => $email,
-            'password' => password_hash($password, PASSWORD_DEFAULT),
-            'role' => $role,
-            'domain' => $domain,
-            'created_at' => date('Y-m-d H:i:s')
-        ]);
-    }
-
-    public function deactivateUser($userId) {
-        // Implémentez selon votre logique métier
-        // Ex: marquer l'utilisateur comme inactif plutôt que suppression
+    public function deactivateStudent($studentId) {
+        // Exemple : marquer comme inactif
+        $stmt = $this->pdo->prepare("UPDATE students SET active = 0 WHERE id = ?");
+        return $stmt->execute([$studentId]);
     }
 
     /**
@@ -131,16 +144,16 @@ class Admin {
      */
     public function getDashboardStats() {
         return [
-            'students' => $this->countUsersByRole('student'),
-            'teachers' => $this->countUsersByRole('teacher'),
+            'students' => $this->countStudentsByRole('student'),
+            'teachers' => $this->countStudentsByRole('teacher'),
             'projects_pending' => $this->projectModel->countByStatus('en cours'),
             'projects_assigned' => $this->projectModel->countByStatus('assigné'),
             'notifications_unread' => $this->notificationModel->getUnreadCount(null, 'admin')
         ];
     }
 
-    private function countUsersByRole($role) {
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM users WHERE role = ?");
+    private function countStudentsByRole($role) {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM students WHERE role = ?");
         $stmt->execute([$role]);
         return $stmt->fetchColumn();
     }
@@ -153,6 +166,6 @@ class Admin {
     }
 
     public function getAdminNotifications($unreadOnly = false) {
-        return $this->notificationModel->getForUser($_SESSION['user_id'], 'admin', $unreadOnly);
+        return $this->notificationModel->getForStudent($_SESSION['admin_id'], 'admin', $unreadOnly);
     }
 }

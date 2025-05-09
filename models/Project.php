@@ -17,8 +17,9 @@ class Project {
             CREATE TABLE IF NOT EXISTS projects (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 student_id INTEGER NOT NULL,
-                Nom_binome TEXT NOT NULL,
-                title TEXT NOT NULL,
+                teacher_id INTEGER,
+                binome_name TEXT NOT NULL,
+                theme TEXT NOT NULL,
                 description TEXT,
                 domains TEXT NOT NULL CHECK(
                     domains IN (
@@ -29,241 +30,138 @@ class Project {
                 ),
                 file_path TEXT NOT NULL,
                 status TEXT NOT NULL DEFAULT 'pending' CHECK(
-                    status IN ('en cours', 'assigné', 'completé')
+                    status IN ('pending', 'assigned')
                 ),
-                assigned_teacher_id INTEGER,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (student_id) REFERENCES users(id),
+                FOREIGN KEY (student_id) REFERENCES students(id),
                 FOREIGN KEY (teacher_id) REFERENCES teachers(id)
             );
         ");
     }
 
-    /**
-     * Valide les domaines comme dans Teacher.php
-     */
     private function validateDomains($domains) {
         $allowed = [
             'AL', 'SRC', 'SI',
             'AL/SI', 'AL/SRC', 'SI/SRC',
             'AL/SI/SRC'
         ];
-        
+
         if (is_array($domains)) {
             $domains = implode('/', array_unique($domains));
         }
-        
+
         $domains = strtoupper($domains);
-        
+
         if (!in_array($domains, $allowed)) {
-            throw new InvalidArgumentException("Combinaison de domaines invalide. Les combinaisons autorisées sont: " . implode(', ', $allowed));
+            throw new InvalidArgumentException("Invalid domain combination. Allowed combinations are: " . implode(', ', $allowed));
         }
-        
+
         return $domains;
     }
 
-    /**
-     * Crée un nouveau projet
-     */
-    public function create($studentId, $Nom_binome, $title, $description, $domains, $filePath) {
-        $domains = $this->validateDomains($domains);
-        
-        $stmt = $this->pdo->prepare("
-            INSERT INTO projects (
-                student_id, Nom_binome, title, 
-                description, domains, file_path
-            ) VALUES (
-                :student_id, :Nom_binome, :title,
-                :description, :domains, :file_path
-            )
-        ");
-        
-        return $stmt->execute([
-            ':student_id' => $studentId,
-            ':partner_name' => $Nom_binome,
-            ':title' => $title,
-            ':description' => $description,
-            ':domains' => $domains,
-            ':file_path' => $filePath
-        ]);
+    public function create($studentId, $binomeName, $theme, $description, $domains, $filePath) {
+        try {
+            $domains = $this->validateDomains($domains);
+
+            $stmt = $this->pdo->prepare("
+                INSERT INTO projects (
+                    student_id, binome_name, theme, description, domains, file_path
+                ) VALUES (
+                    :student_id, :binome_name, :theme, :description, :domains, :file_path
+                )
+            ");
+            return $stmt->execute([
+                ':student_id' => $studentId,
+                ':binome_name' => $binomeName,
+                ':theme' => $theme,
+                ':description' => $description,
+                ':domains' => $domains,
+                ':file_path' => $filePath
+            ]);
+        } catch (PDOException $e) {
+            // Handle PDO error here
+            return false;
+        }
     }
 
-    /**
-     * Affecte un enseignant à un projet
-     */
     public function assignTeacher($projectId, $teacherId) {
-        $stmt = $this->pdo->prepare("
-            UPDATE projects 
-            SET teacher_id = :teacher_id,
-                status = 'assigné',
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = :project_id
-        ");
-        
-        return $stmt->execute([
-            ':teacher_id' => $teacherId,
-            ':project_id' => $projectId
-        ]);
+        try {
+            $stmt = $this->pdo->prepare("
+                UPDATE projects 
+                SET teacher_id = :teacher_id,
+                    status = 'assigned',
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = :project_id
+            ");
+
+            return $stmt->execute([
+                ':teacher_id' => $teacherId,
+                ':project_id' => $projectId
+            ]);
+        } catch (PDOException $e) {
+            // Handle PDO error here
+            return false;
+        }
     }
 
-    /**
-     * Récupère un projet par son ID
-     */
     public function getById($id) {
-        $stmt = $this->pdo->prepare("
-            SELECT p.*, 
-                   u.username as student_name,
-                   t.Nom || ' ' || t.prenom as teacher_name
-            FROM projects p
-            LEFT JOIN users u ON p.student_id = u.id
-            LEFT JOIN teachers t ON p.teacher_id = t.id
-            WHERE p.id = :id
-        ");
-        $stmt->execute([':id' => $id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT p.*, 
+                       u.username as student_name,
+                       p.binome_name,
+                       t.username as teacher_name
+                FROM projects p
+                LEFT JOIN students u ON p.student_id = u.id
+                LEFT JOIN teachers t ON p.teacher_id = t.id
+                WHERE p.id = :id
+            ");
+            $stmt->execute([':id' => $id]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            // Handle PDO error here
+            return false;
+        }
     }
 
-    /**
-     * Récupère tous les projets d'un étudiant
-     */
     public function getByStudent($studentId) {
-        $stmt = $this->pdo->prepare("
-            SELECT p.*, 
-                   t.Nom || ' ' || t.prenom as teacher_name
-            FROM projects p
-            LEFT JOIN teachers t ON p.teacher_id = t.id
-            WHERE p.student_id = :student_id
-            ORDER BY p.created_at DESC
-        ");
-        $stmt->execute([':student_id' => $studentId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT p.*, 
+                       u.username as student_name,
+                       p.binome_name,
+                       t.username as teacher_name
+                FROM projects p
+                LEFT JOIN students u ON p.student_id = u.id
+                LEFT JOIN teachers t ON p.teacher_id = t.id
+                WHERE p.student_id = :student_id
+            ");
+            $stmt->execute([':student_id' => $studentId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            // Handle PDO error here
+            return false;
+        }
     }
 
-    /**
-     * Récupère les projets en attente d'affectation
-     */
-    public function getPendingProjects() {
-        $stmt = $this->pdo->query("
-            SELECT p.*, 
-                   u.username as student_name
-            FROM projects p
-            JOIN users u ON p.student_id = u.id
-            WHERE p.status = 'en cours'
-            ORDER BY p.created_at
-        ");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * Récupère les projets par domaine
-     */
     public function getByDomain($domain) {
-        $stmt = $this->pdo->prepare("
-            SELECT p.*, 
-                   u.username as student_name,
-                   t.Nom || ' ' || t.prenom as teacher_name
-            FROM projects p
-            JOIN users u ON p.student_id = u.id
-            LEFT JOIN teachers t ON p.teacher_id = t.id
-            WHERE p.domains LIKE :domain
-            ORDER BY p.status, p.created_at
-        ");
-        $stmt->execute([':domain' => '%' . $domain . '%']);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * Met à jour le statut d'un projet
-     */
-    public function updateStatus($projectId, $status) {
-        $stmt = $this->pdo->prepare("
-            UPDATE projects 
-            SET status = :status,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = :project_id
-        ");
-        
-        return $stmt->execute([
-            ':status' => $status,
-            ':project_id' => $projectId
-        ]);
-    }
-
-    /**
-     * Supprime un projet
-     */
-
-    public function delete($id) {
-        $stmt = $this->pdo->prepare("DELETE FROM projects WHERE id = :id");
-        return $stmt->execute([':id' => $id]);
-    }
-
-     /**
-     * Récupère les projets assignés à un enseignant
-     */
-    public function getByTeacher($teacherId) {
-        $stmt = $this->pdo->prepare("
-            SELECT p.*, u.username as student_name
-            FROM projects p
-            JOIN users u ON p.student_id = u.id
-            WHERE p.teacher_id = :teacher_id
-            ORDER BY p.status, p.created_at
-        ");
-        $stmt->execute([':teacher_id' => $teacherId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-        
-
-    /**
-     * Récupère les projets par statut
-     */
-    public function getByStatus($status) {
-        $validStatuses = ['pending', 'assigned', 'completed'];
-        if (!in_array($status, $validStatuses)) {
-            throw new InvalidArgumentException("Statut de projet invalide");
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT p.*, 
+                       u.username as student_name,
+                       p.binome_name,
+                       t.username as teacher_name
+                FROM projects p
+                LEFT JOIN students u ON p.student_id = u.id
+                LEFT JOIN teachers t ON p.teacher_id = t.id
+                WHERE p.domains LIKE :domain
+            ");
+            $stmt->execute([':domain' => '%' . $domain . '%']);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            // Handle PDO error here
+            return false;
         }
-
-        $stmt = $this->pdo->prepare("
-            SELECT p.*, u.username as student_name, 
-                   t.Nom || ' ' || t.prenom as teacher_name
-            FROM projects p
-            LEFT JOIN users u ON p.student_id = u.id
-            LEFT JOIN teachers t ON p.assigned_teacher_id = t.id
-            WHERE p.status = :status
-            ORDER BY p.created_at
-        ");
-        $stmt->execute([':status' => $status]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-
-    /**
-     * Compte les projets par statut
-     */
-    public function countByStatus($status) {
-        $validStatuses = ['en cours', 'assigné', 'completé'];
-        if (!in_array($status, $validStatuses)) {
-            throw new InvalidArgumentException("Statut de projet invalide");
-        }
-
-        $stmt = $this->pdo->prepare("
-            SELECT COUNT(*) as count 
-            FROM projects 
-            WHERE status = :status
-        ");
-        $stmt->execute([':status' => $status]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result['count'] ?? 0;
-    }
-
-    /**
-     * Compte les enseignants
-     */
-    public function countTeachers() {
-        $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM teachers");
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result['count'] ?? 0;
-    }
-
 }

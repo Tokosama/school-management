@@ -1,19 +1,19 @@
 <?php
-require_once __DIR__ . '/../Models/User.php';
+require_once __DIR__ . '/../Models/Student.php';
 require_once __DIR__ . '/../Models/Teacher.php';
 require_once __DIR__ . '/../Models/Project.php';
 require_once __DIR__ . '/../Models/Notification.php';
 
 class AdminController
 {
-    private $userModel;
+    private $StudentModel;
     private $teacherModel;
     private $projectModel;
     private $notificationModel;
 
     public function __construct()
     {
-        $this->userModel = new User();
+        $this->StudentModel = new Student();
         $this->teacherModel = new Teacher();
         $this->projectModel = new Project();
         $this->notificationModel = new Notification();
@@ -24,7 +24,7 @@ class AdminController
      */
     private function checkAdminAuth()
     {
-        if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+        if (!isset($_SESSION['Student_id']) || $_SESSION['Student_role'] !== 'admin') {
             header('Location: /auth/login');
             exit;
         }
@@ -44,7 +44,7 @@ class AdminController
             'unread_notifications' => $this->notificationModel->getUnreadCount(null, 'admin')
         ];
 
-        $recentNotifications = $this->notificationModel->getForUser($_SESSION['user_id'], 'admin', true, 5);
+        $recentNotifications = $this->notificationModel->getForStudent($_SESSION['Student_id'], 'admin', true, 5);
 
         require_once __DIR__ . '/../Views/admin/dashboard.php';
     }
@@ -141,7 +141,7 @@ class AdminController
 
                 // Notification à l'étudiant
                 $this->notificationModel->create(
-                    $_SESSION['user_id'],
+                    $_SESSION['Student_id'],
                     "Votre projet '{$project['title']}' a été affecté à {$teacher['first_name']} {$teacher['last_name']}",
                     'student',
                     $projectId
@@ -149,7 +149,7 @@ class AdminController
 
                 // Notification à l'enseignant
                 $this->notificationModel->create(
-                    $_SESSION['user_id'],
+                    $_SESSION['Student_id'],
                     "Nouvelle affectation : Projet '{$project['title']}'",
                     'teacher',
                     $projectId
@@ -174,8 +174,8 @@ class AdminController
     {
         $this->checkAdminAuth();
 
-        $notifications = $this->notificationModel->getForUser(
-            $_SESSION['user_id'],
+        $notifications = $this->notificationModel->getForStudent(
+            $_SESSION['Student_id'],
             'admin',
             false // Toutes les notifications
         );

@@ -2,7 +2,7 @@
 session_start();
 include 'header.php'; // Inclure le header commun
 
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['Student_id'])) {
     header('Location: login.php');
     exit();
 }

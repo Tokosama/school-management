@@ -1,15 +1,15 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['Student_id'])) {
     header('Location: index.php?action=login');
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
+$Student_id = $_SESSION['Student_id'];
 
 // Exemple simple de rôle étudiant (à ajuster avec ta logique)
-$is_student = $user_id === 'etudiant'; 
+$is_student = $Student_id === 'etudiant'; 
 ?>
 
 <!-- Inclusion du header -->
@@ -25,7 +25,7 @@ $is_student = $user_id === 'etudiant';
 </head>
 <body>
     <div class="container">
-        <h1>Bienvenue, <?php echo htmlspecialchars($user_id); ?> !</h1>
+        <h1>Bienvenue, <?php echo htmlspecialchars($Student_id); ?> !</h1>
 
         <?php if ($is_student): ?>
             <p>Soumettez votre cahier de charge.</p>

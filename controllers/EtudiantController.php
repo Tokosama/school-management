@@ -1,17 +1,17 @@
 <?php
-require_once '../app/Models/User.php';
+require_once '../app/Models/Student.php';
 require_once '../app/Models/Project.php';
 require_once '../app/Models/Notification.php';
 
 class EtudiantController
 {
-    private $userModel;
+    private $StudentModel;
     private $projectModel;
     private $notificationModel;
 
     public function __construct()
     {
-        $this->userModel = new User();
+        $this->StudentModel = new Student();
         $this->projectModel = new Project();
         $this->notificationModel = new Notification();
     }
@@ -19,14 +19,14 @@ class EtudiantController
     public function dashboard()
     {
         // Vérification de l'authentification
-        if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'student') {
+        if (!isset($_SESSION['Student_id']) || $_SESSION['Student_role'] !== 'student') {
             header('Location: /auth/login');
             exit;
         }
 
         // Récupération des données
-        $student = $this->userModel->getUserById($_SESSION['user_id']);
-        $projects = $this->projectModel->getByStudent($_SESSION['user_id']);
+        $student = $this->StudentModel->getStudentById($_SESSION['Student_id']);
+        $projects = $this->projectModel->getByStudent($_SESSION['Student_id']);
 
         require_once '../app/Views/etudiant/dashboard.php';
     }
@@ -34,13 +34,13 @@ class EtudiantController
     public function showSubmissionForm()
     {
         // Vérification de l'authentification
-        if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'student') {
+        if (!isset($_SESSION['Student_id']) || $_SESSION['Student_role'] !== 'student') {
             header('Location: /auth/login');
             exit;
         }
 
         // Vérifier si l'étudiant a déjà soumis un projet
-        $existingProjects = $this->projectModel->getByStudent($_SESSION['user_id']);
+        $existingProjects = $this->projectModel->getByStudent($_SESSION['Student_id']);
         if (!empty($existingProjects)) {
             $_SESSION['error'] = 'Vous avez déjà soumis un projet.';
             header('Location: /etudiant/dashboard');
@@ -53,7 +53,7 @@ class EtudiantController
     public function submitCahier()
     {
         // Vérification de l'authentification et méthode POST
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'student') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['Student_id']) || $_SESSION['Student_role'] !== 'student') {
             header('Location: /auth/login');
             exit;
         }
@@ -92,7 +92,7 @@ class EtudiantController
             try {
                 // Création du projet
                 $this->projectModel->create(
-                    studentId: $_SESSION['user_id'],
+                    studentId: $_SESSION['Student_id'],
                     Nom_binome: $partnerName,
                     title: $title,
                     description: $description,
@@ -120,13 +120,13 @@ class EtudiantController
     public function relancer()
     {
         // Vérification de l'authentification
-        if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'student') {
+        if (!isset($_SESSION['Student_id']) || $_SESSION['Student_role'] !== 'student') {
             header('Location: /auth/login');
             exit;
         }
 
         // Vérifier si l'étudiant a un projet en attente
-        $projects = $this->projectModel->getByStudent($_SESSION['user_id']);
+        $projects = $this->projectModel->getByStudent($_SESSION['Student_id']);
         $hasPendingProject = false;
 
         foreach ($projects as $project) {
@@ -144,7 +144,7 @@ class EtudiantController
 
         // Création de la notification
         $this->notificationModel->create(
-            $_SESSION['user_id'],
+            $_SESSION['Student_id'],
             'Relance pour affectation de projet',
             'admin'
         );

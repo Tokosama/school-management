@@ -19,17 +19,17 @@ class EnseignantController
     public function dashboard()
     {
         // Vérification de l'authentification et du rôle
-        if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'teacher') {
+        if (!isset($_SESSION['Student_id']) || $_SESSION['Student_role'] !== 'teacher') {
             header('Location: /auth/login');
             exit;
         }
 
         // Récupération des projets assignés
-        $teacherId = $_SESSION['user_id'];
+        $teacherId = $_SESSION['Student_id'];
         $projects = $this->teacherModel->getAssignedProjects($teacherId);
 
         // Récupération des notifications
-        $notifications = $this->notificationModel->getForUser(
+        $notifications = $this->notificationModel->getForStudent(
             $teacherId,
             'teacher',
             true // Unread only
@@ -45,7 +45,7 @@ class EnseignantController
     {
         $this->checkTeacherAuth();
 
-        $teacher = $this->teacherModel->getById($_SESSION['user_id']);
+        $teacher = $this->teacherModel->getById($_SESSION['Student_id']);
         $domainOptions = ['AL', 'SRC', 'SI']; // Options pour le formulaire
 
         require_once __DIR__ . '/../Views/enseignant/profile.php';
@@ -63,7 +63,7 @@ class EnseignantController
             exit;
         }
 
-        $teacherId = $_SESSION['user_id'];
+        $teacherId = $_SESSION['Student_id'];
         $Nom = trim($_POST['Nom'] ?? '');
         $prenom = trim($_POST['prenom'] ?? '');
         $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
@@ -100,7 +100,7 @@ class EnseignantController
     {
         $this->checkTeacherAuth();
 
-        $projects = $this->teacherModel->getAssignedProjects($_SESSION['user_id']);
+        $projects = $this->teacherModel->getAssignedProjects($_SESSION['Student_id']);
         require_once __DIR__ . '/../Views/enseignant/projects.php';
     }
 
@@ -126,7 +126,7 @@ class EnseignantController
      */
     private function checkTeacherAuth()
     {
-        if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'teacher') {
+        if (!isset($_SESSION['Student_id']) || $_SESSION['Student_role'] !== 'teacher') {
             header('Location: /auth/login');
             exit;
         }

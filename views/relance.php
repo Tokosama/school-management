@@ -3,7 +3,7 @@ session_start();
 include 'header.php'; // Inclure le header commun
 
 // Vérifier si l'utilisateur est connecté
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['Student_id'])) {
     header('Location: login.php');
     exit();
 }

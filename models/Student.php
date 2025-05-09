@@ -1,7 +1,7 @@
 <?php
-// User.php
+// Student.php
 
-class User {
+class Student {
     private $pdo;
 
     public function __construct() {
@@ -13,113 +13,85 @@ class User {
     // Initialisation des tables si elles n'existent pas
     private function createTable() {
         $this->pdo->exec("
-            CREATE TABLE IF NOT EXISTS users (
-                user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL,
-                role TEXT NOT NULL CHECK(role IN ('student')),
-                domain TEXT
-            );
-        ");
-
-        $this->pdo->exec("
-            CREATE TABLE IF NOT EXISTS projects (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                student_id INTEGER NOT NULL,
-                binome TEXT NOT NULL,
-                theme TEXT NOT NULL,
-                file_path TEXT NOT NULL,
-                teacher_id INTEGER ,
-                status TEXT NOT NULL DEFAULT 'pending',
-                FOREIGN KEY(student_id) REFERENCES users(id),
-                FOREIGN KEY(teacher_id) REFERENCES users(id)
-            );
-        ");
-
-        $this->pdo->exec("
-            CREATE TABLE IF NOT EXISTS notifications (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                student_id INTEGER NOT NULL,
-                message TEXT NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(student_id) REFERENCES users(id)
-            );
-        ");
+        CREATE TABLE IF NOT EXISTS students (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            domains TEXT NOT NULL CHECK(
+                domains IN (
+                    'AL', 'SRC', 'SI',
+                    'AL/SI', 'AL/SRC', 'SI/SRC',
+                    'AL/SI/SRC'
+                )
+            )
+        );
+    ");
     }
 
     // Ajout des nouvelles méthodes nécessaires pour AuthController
     public function findByUsername($username) {
-        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE username = :username");
+        $stmt = $this->pdo->prepare("SELECT * FROM students WHERE username = :username");
         $stmt->execute([':username' => $username]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function findByEmail($email) {
-        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE email = :email");
-        $stmt->execute([':email' => $email]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
 
     public function create(array $data) {
         $stmt = $this->pdo->prepare("
-            INSERT INTO users (username, email, password, role, filiere, created_at)
-            VALUES (:username, :email, :password, :role, :filiere, :created_at)
+            INSERT INTO students (username, password, domains)
+            VALUES (:username, :password, :domains)
         ");
         return $stmt->execute([
             ':username' => $data['username'],
-            ':email' => $data['email'],
             ':password' => $data['password'],
-            ':role' => $data['role'],
-            ':filiere' => $data['filiere'],
-            ':created_at' => $data['created_at']
+            ':domains' => $data['domains']
         ]);
     }
 
-    public function updateRememberToken($userId, $token, $expires) {
+    public function updateRememberToken($studentId, $token, $expires) {
         $stmt = $this->pdo->prepare("
-            UPDATE users 
+            UPDATE students 
             SET remember_token = :token, remember_token_expires = :expires 
             WHERE id = :id
         ");
         return $stmt->execute([
             ':token' => $token,
             ':expires' => $expires,
-            ':id' => $userId
+            ':id' => $studentId
         ]);
     }
 
     // Enregistrement d'un nouvel utilisateur
-    public function register($username, $password, $role, $filiere = null) {
+    public function register($username, $password, $domains) {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         $stmt = $this->pdo->prepare("
-            INSERT INTO users (username, password, role, filiere)
-            VALUES (:username, :password, :role, :filiere)
+            INSERT INTO students (username, password, domains)
+            VALUES (:username, :password, :domains)
         ");
         return $stmt->execute([
             ':username' => $username,
             ':password' => $hashedPassword,
-            ':role' => $role,
-            ':filiere' => $filiere
+            ':domains' => $domains
         ]);
     }
 
     // Connexion de l'utilisateur
     public function login($username, $password) {
         $stmt = $this->pdo->prepare("
-            SELECT * FROM users WHERE username = :username
+            SELECT * FROM students WHERE username = :username
         ");
         $stmt->execute([':username' => $username]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($user && password_verify($password, $user['password'])) {
-            return $user;
+        $student = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($student && password_verify($password, $student['password'])) {
+            return $student;
         }
         return false;
     }
 
     // Récupérer un utilisateur par son ID
-    public function getUserById($id) {
+    public function getStudentById($id) {
         $stmt = $this->pdo->prepare("
-            SELECT * FROM users WHERE id = :id
+            SELECT * FROM students WHERE id = :id
         ");
         $stmt->execute([':id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -128,7 +100,7 @@ class User {
     // Récupérer tous les enseignants
     public function getAllTeachers() {
         $stmt = $this->pdo->query("
-            SELECT * FROM users WHERE role = 'teacher'
+            SELECT * FROM students WHERE role = 'teacher'
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -141,7 +113,7 @@ class User {
         ");
         return $stmt->execute([
             ':student_id' => $student_id,
-            ':partner_name' => $binome,
+            ':binome' => $binome,
             ':theme' => $theme,
             ':file_path' => $file_path
         ]);
@@ -151,7 +123,7 @@ class User {
     public function assignTeacher($project_id, $teacher_id) {
         $stmt = $this->pdo->prepare("
             UPDATE projects
-            SET assigned_teacher_id = :teacher_id, status = 'assigned'
+            SET teacher_id = :teacher_id, status = 'assigned'
             WHERE id = :project_id
         ");
         return $stmt->execute([
