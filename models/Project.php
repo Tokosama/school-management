@@ -95,8 +95,8 @@ class Project {
     public function assignTeacher($projectId, $teacherId) {
         $stmt = $this->pdo->prepare("
             UPDATE projects 
-            SET assigned_teacher_id = :teacher_id,
-                status = 'assigned',
+            SET teacher_id = :teacher_id,
+                status = 'assigné',
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = :project_id
         ");
@@ -114,10 +114,10 @@ class Project {
         $stmt = $this->pdo->prepare("
             SELECT p.*, 
                    u.username as student_name,
-                   t.first_name || ' ' || t.last_name as teacher_name
+                   t.Nom || ' ' || t.prenom as teacher_name
             FROM projects p
             LEFT JOIN users u ON p.student_id = u.id
-            LEFT JOIN teachers t ON p.assigned_teacher_id = t.id
+            LEFT JOIN teachers t ON p.teacher_id = t.id
             WHERE p.id = :id
         ");
         $stmt->execute([':id' => $id]);
@@ -130,9 +130,9 @@ class Project {
     public function getByStudent($studentId) {
         $stmt = $this->pdo->prepare("
             SELECT p.*, 
-                   t.first_name || ' ' || t.last_name as teacher_name
+                   t.Nom || ' ' || t.prenom as teacher_name
             FROM projects p
-            LEFT JOIN teachers t ON p.assigned_teacher_id = t.id
+            LEFT JOIN teachers t ON p.teacher_id = t.id
             WHERE p.student_id = :student_id
             ORDER BY p.created_at DESC
         ");
@@ -149,7 +149,7 @@ class Project {
                    u.username as student_name
             FROM projects p
             JOIN users u ON p.student_id = u.id
-            WHERE p.status = 'pending'
+            WHERE p.status = 'en cours'
             ORDER BY p.created_at
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -162,10 +162,10 @@ class Project {
         $stmt = $this->pdo->prepare("
             SELECT p.*, 
                    u.username as student_name,
-                   t.first_name || ' ' || t.last_name as teacher_name
+                   t.Nom || ' ' || t.prenom as teacher_name
             FROM projects p
             JOIN users u ON p.student_id = u.id
-            LEFT JOIN teachers t ON p.assigned_teacher_id = t.id
+            LEFT JOIN teachers t ON p.teacher_id = t.id
             WHERE p.domains LIKE :domain
             ORDER BY p.status, p.created_at
         ");
@@ -193,8 +193,77 @@ class Project {
     /**
      * Supprime un projet
      */
+
     public function delete($id) {
         $stmt = $this->pdo->prepare("DELETE FROM projects WHERE id = :id");
         return $stmt->execute([':id' => $id]);
     }
+
+     /**
+     * Récupère les projets assignés à un enseignant
+     */
+    public function getByTeacher($teacherId) {
+        $stmt = $this->pdo->prepare("
+            SELECT p.*, u.username as student_name
+            FROM projects p
+            JOIN users u ON p.student_id = u.id
+            WHERE p.teacher_id = :teacher_id
+            ORDER BY p.status, p.created_at
+        ");
+        $stmt->execute([':teacher_id' => $teacherId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+        
+
+    /**
+     * Récupère les projets par statut
+     */
+    public function getByStatus($status) {
+        $validStatuses = ['pending', 'assigned', 'completed'];
+        if (!in_array($status, $validStatuses)) {
+            throw new InvalidArgumentException("Statut de projet invalide");
+        }
+
+        $stmt = $this->pdo->prepare("
+            SELECT p.*, u.username as student_name, 
+                   t.Nom || ' ' || t.prenom as teacher_name
+            FROM projects p
+            LEFT JOIN users u ON p.student_id = u.id
+            LEFT JOIN teachers t ON p.assigned_teacher_id = t.id
+            WHERE p.status = :status
+            ORDER BY p.created_at
+        ");
+        $stmt->execute([':status' => $status]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Compte les projets par statut
+     */
+    public function countByStatus($status) {
+        $validStatuses = ['en cours', 'assigné', 'completé'];
+        if (!in_array($status, $validStatuses)) {
+            throw new InvalidArgumentException("Statut de projet invalide");
+        }
+
+        $stmt = $this->pdo->prepare("
+            SELECT COUNT(*) as count 
+            FROM projects 
+            WHERE status = :status
+        ");
+        $stmt->execute([':status' => $status]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['count'] ?? 0;
+    }
+
+    /**
+     * Compte les enseignants
+     */
+    public function countTeachers() {
+        $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM teachers");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['count'] ?? 0;
+    }
+
 }

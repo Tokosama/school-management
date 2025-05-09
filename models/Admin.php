@@ -77,7 +77,7 @@ class Admin {
             // Notifier l'étudiant
             $this->notificationModel->create(
                 $_SESSION['user_id'],
-                "Votre projet '{$project['title']}' a été affecté à {$teacher['first_name']} {$teacher['last_name']}",
+                "Votre projet '{$project['title']}' a été affecté à {$teacher['Nom']} {$teacher['prenom']}",
                 'student',
                 $projectId
             );
@@ -99,7 +99,7 @@ class Admin {
     }
 
     public function getProjectsByStatus($status) {
-        $validStatuses = ['pending', 'assigned', 'completed'];
+        $validStatuses = ['en cours', 'assigné', 'completé'];
         if (!in_array($status, $validStatuses)) {
             throw new InvalidArgumentException("Statut de projet invalide");
         }
@@ -133,8 +133,8 @@ class Admin {
         return [
             'students' => $this->countUsersByRole('student'),
             'teachers' => $this->countUsersByRole('teacher'),
-            'projects_pending' => $this->projectModel->countByStatus('pending'),
-            'projects_assigned' => $this->projectModel->countByStatus('assigned'),
+            'projects_pending' => $this->projectModel->countByStatus('en cours'),
+            'projects_assigned' => $this->projectModel->countByStatus('assigné'),
             'notifications_unread' => $this->notificationModel->getUnreadCount(null, 'admin')
         ];
     }

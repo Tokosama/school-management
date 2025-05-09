@@ -46,6 +46,8 @@ class Teacher {
         ]);
     }
 
+    
+
     public function getAll() {
         $stmt = $this->pdo->query("
             SELECT * FROM users WHERE role = 'teacher'
@@ -54,8 +56,6 @@ class Teacher {
     }
 
     public function update($id, $Nom, $prenom, $email, $domains) {
-        // Validation des domaines (identique à create)
-        $domains = $this->validateDomains($domains);
         
         // Vérification unicité email (excluant l'enseignant actuel)
         $stmt = $this->pdo->prepare("
@@ -96,5 +96,70 @@ class Teacher {
         $stmt->execute([':domains' => '%' . $domain . '%']);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function delete($id) {
+        $stmt = $this->pdo->prepare("DELETE FROM teachers WHERE id = :id");
+        return $stmt->execute([':id' => $id]);
+    }
+
+    public function getById($id) {
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                id,
+                Nom,
+                prenom,
+                email,
+                domains,
+                created_at,
+                updated_at
+            FROM teachers 
+            WHERE id = :id
+        ");
+        $stmt->execute([':id' => $id]);
+        
+        $teacher = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($teacher) {
+            // Convertit les domaines en tableau si nécessaire
+            $teacher['domains'] = explode('/', $teacher['domains']);
+        }
+        
+        return $teacher ?: null;
+    }
+
+    public function count(): int
+{
+    $stmt = $this->pdo->query("SELECT COUNT(*) FROM teachers");
+    return (int)$stmt->fetchColumn();
+}
+
+public function getAssignedProjects(int $teacherId): array
+{
+    $stmt = $this->pdo->prepare("
+        SELECT 
+            p.id,
+            p.title,
+            p.description,
+            p.domains, 
+            p.status,
+            p.file_path,
+            p.created_at as project_created_at,
+            u.username as student_username,
+            u.email as student_email
+        FROM 
+            projects p
+        JOIN 
+            users u ON p.student_id = u.id
+        WHERE 
+            p.assigned_teacher_id = :teacher_id
+        ORDER BY 
+            p.status ASC, p.created_at DESC
+    ");
+    
+    $stmt->execute([':teacher_id' => $teacherId]);
+    
+    // Retourne les résultats bruts (sans conversion des domaines)
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 }
 ?>
