@@ -1,3 +1,4 @@
+/* Style global */
 body {
     font-family: 'Segoe UI', sans-serif;
     background-color: #f4f6f9;
@@ -5,28 +6,35 @@ body {
     padding: 0;
 }
 
-.container {
-    max-width: 450px;
+h2.form-title {
+    text-align: center;
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Style du container du formulaire */
+.form-container {
+    max-width: 600px;
     margin: 50px auto;
     padding: 30px;
-    background: white;
+    background-color: white;
     border-radius: 10px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
 }
 
-h1 {
-    text-align: center;
-    color: #333;
+.form-group {
+    margin-bottom: 20px;
 }
 
-label {
+.form-label {
+    font-weight: bold;
+    margin-bottom: 8px;
     display: block;
-    margin-top: 15px;
-    margin-bottom: 5px;
     color: #555;
 }
 
-input[type="text"] {
+.form-input, .form-textarea {
     width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
@@ -34,8 +42,21 @@ input[type="text"] {
     box-sizing: border-box;
 }
 
-button {
-    margin-top: 20px;
+.form-textarea {
+    height: 150px;
+    resize: vertical;
+}
+
+.text-muted {
+    font-size: 12px;
+    color: #777;
+}
+
+.text-red-500 {
+    color: #f44336;
+}
+
+button.form-button {
     width: 100%;
     padding: 12px;
     background-color: #007BFF;
@@ -44,19 +65,45 @@ button {
     border-radius: 6px;
     font-size: 16px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-button:hover {
+button.form-button:hover {
     background-color: #0056b3;
 }
 
-.confirmation {
-    background-color: #d4edda;
-    color: #155724;
-    padding: 15px;
-    border-radius: 6px;
-    border: 1px solid #c3e6cb;
-    margin: 20px auto;
-    width: 90%;
+button.form-button-secondary {
+    background-color: #f1f1f1;
+    color: #333;
+}
+
+button.form-button-secondary:hover {
+    background-color: #e0e0e0;
+}
+
+.form-button-icon {
+    margin-right: 8px;
+    width: 20px;
+    height: 20px;
+}
+
+/* Style pour les messages d'erreur et de confirmation */
+#fichier-error {
+    font-size: 12px;
+    color: #f44336;
+}
+
+#message-cahier {
     text-align: center;
+    margin-top: 20px;
+}
+
+.text-green-500 {
+    color: #4caf50;
+}
+
+.text-sm {
+    font-size: 12px;
 }
