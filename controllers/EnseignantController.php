@@ -1,65 +1,134 @@
 <?php
+require_once __DIR__ . '/../Models/Teacher.php';
+require_once __DIR__ . '/../Models/Notification.php';
+
 class EnseignantController
 {
-    private $pdo;
+    private $teacherModel;
+    private $notificationModel;
 
-    public function __construct($dbHost, $dbName, $dbUser, $dbPass)
+    public function __construct()
     {
+        $this->teacherModel = new Teacher();
+        $this->notificationModel = new Notification();
+    }
+
+    /**
+     * Affiche le tableau de bord enseignant
+     */
+    public function dashboard()
+    {
+        // Vérification de l'authentification et du rôle
+        if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'teacher') {
+            header('Location: /auth/login');
+            exit;
+        }
+
+        // Récupération des projets assignés
+        $teacherId = $_SESSION['user_id'];
+        $projects = $this->teacherModel->getAssignedProjects($teacherId);
+
+        // Récupération des notifications
+        $notifications = $this->notificationModel->getForUser(
+            $teacherId,
+            'teacher',
+            true // Unread only
+        );
+
+        require_once __DIR__ . '/../Views/enseignant/dashboard.php';
+    }
+
+    /**
+     * Affiche le formulaire de profil
+     */
+    public function showProfile()
+    {
+        $this->checkTeacherAuth();
+
+        $teacher = $this->teacherModel->getById($_SESSION['user_id']);
+        $domainOptions = ['AL', 'SRC', 'SI']; // Options pour le formulaire
+
+        require_once __DIR__ . '/../Views/enseignant/profile.php';
+    }
+
+    /**
+     * Met à jour le profil enseignant
+     */
+    public function updateProfile()
+    {
+        $this->checkTeacherAuth();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /enseignant/profile');
+            exit;
+        }
+
+        $teacherId = $_SESSION['user_id'];
+        $Nom = trim($_POST['Nom'] ?? '');
+        $prenom = trim($_POST['prenom'] ?? '');
+        $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
+        $domains = $_POST['domains'] ?? [];
+
         try {
-            $this->pdo = new PDO("mysql:host=$dbHost;dbname=$dbName;charset=utf8", $dbUser, $dbPass);
+            $success = $this->teacherModel->update(
+                $teacherId,
+                $Nom,
+                $prenom,
+                $email,
+                $domains
+            );
+
+            if ($success) {
+                $_SESSION['success'] = 'Profil mis à jour avec succès';
+            } else {
+                $_SESSION['error'] = 'Aucune modification détectée';
+            }
+        } catch (InvalidArgumentException $e) {
+            $_SESSION['error'] = $e->getMessage();
         } catch (PDOException $e) {
-            die("Erreur de connexion à la base de données : " . $e->getMessage());
+            $_SESSION['error'] = 'Erreur de base de données';
+        }
+
+        header('Location: /enseignant/profile');
+        exit;
+    }
+
+    /**
+     * Affiche les projets assignés
+     */
+    public function showProjects()
+    {
+        $this->checkTeacherAuth();
+
+        $projects = $this->teacherModel->getAssignedProjects($_SESSION['user_id']);
+        require_once __DIR__ . '/../Views/enseignant/projects.php';
+    }
+
+    /**
+     * Marque une notification comme lue
+     */
+    public function markNotificationAsRead($notificationId)
+    {
+        $this->checkTeacherAuth();
+
+        if ($this->notificationModel->markAsRead($notificationId)) {
+            $_SESSION['success'] = 'Notification marquée comme lue';
+        } else {
+            $_SESSION['error'] = 'Erreur lors de la mise à jour';
+        }
+
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/enseignant/dashboard'));
+        exit;
+    }
+
+    /**
+     * Vérifie l'authentification et le rôle enseignant
+     */
+    private function checkTeacherAuth()
+    {
+        if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'teacher') {
+            header('Location: /auth/login');
+            exit;
         }
     }
-
-    // Lister tous les enseignants
-    public function index()
-    {
-        $stmt = $this->pdo->query("SELECT * FROM enseignants");
-        $enseignants = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return $enseignants;
-    }
-
-    // Ajouter un nouvel enseignant
-    public function store($data)
-    {
-        $sql = "INSERT INTO enseignants (nom, prenom, email, specialite) VALUES (:nom, :prenom, :email, :specialite)";
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute([
-            ':nom' => $data['nom'],
-            ':prenom' => $data['prenom'],
-            ':email' => $data['email'],
-            ':specialite' => $data['specialite']
-        ]);
-    }
-
-    // Afficher un enseignant par ID
-    public function show($id)
-    {
-        $stmt = $this->pdo->prepare("SELECT * FROM enseignants WHERE id = ?");
-        $stmt->execute([$id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
-    // Mettre à jour un enseignant
-    public function update($id, $data)
-    {
-        $sql = "UPDATE enseignants SET nom = :nom, prenom = :prenom, email = :email, specialite = :specialite WHERE id = :id";
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute([
-            ':nom' => $data['nom'],
-            ':prenom' => $data['prenom'],
-            ':email' => $data['email'],
-            ':specialite' => $data['specialite'],
-            ':id' => $id
-        ]);
-    }
-
-    // Supprimer un enseignant
-    public function destroy($id)
-    {
-        $stmt = $this->pdo->prepare("DELETE FROM enseignants WHERE id = ?");
-        return $stmt->execute([$id]);
-    }
 }
-?>

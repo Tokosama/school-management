@@ -4,24 +4,20 @@
 class User {
     private $pdo;
 
-    public function __construct($dbPath = 'database.sqlite') {
-        try {
-            $this->pdo = new PDO("sqlite:" . $dbPath);
-            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $this->initializeDatabase();
-        } catch (PDOException $e) {
-            die("Erreur de connexion à la base de données : " . $e->getMessage());
-        }
+    public function __construct() {
+        global $pdo;
+        $this->pdo = $pdo;
+        $this->createTable();
     }
 
     // Initialisation des tables si elles n'existent pas
-    private function initializeDatabase() {
+    private function createTable() {
         $this->pdo->exec("
             CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
-                role TEXT NOT NULL CHECK(role IN ('student', 'teacher', 'admin')),
+                role TEXT NOT NULL CHECK(role IN ('student')),
                 domain TEXT
             );
         ");
@@ -30,13 +26,13 @@ class User {
             CREATE TABLE IF NOT EXISTS projects (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 student_id INTEGER NOT NULL,
-                partner_name TEXT NOT NULL,
+                binome TEXT NOT NULL,
                 theme TEXT NOT NULL,
                 file_path TEXT NOT NULL,
-                assigned_teacher_id INTEGER,
+                teacher_id INTEGER ,
                 status TEXT NOT NULL DEFAULT 'pending',
                 FOREIGN KEY(student_id) REFERENCES users(id),
-                FOREIGN KEY(assigned_teacher_id) REFERENCES users(id)
+                FOREIGN KEY(teacher_id) REFERENCES users(id)
             );
         ");
 
@@ -51,18 +47,59 @@ class User {
         ");
     }
 
+    // Ajout des nouvelles méthodes nécessaires pour AuthController
+    public function findByUsername($username) {
+        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE username = :username");
+        $stmt->execute([':username' => $username]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function findByEmail($email) {
+        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE email = :email");
+        $stmt->execute([':email' => $email]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function create(array $data) {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO users (username, email, password, role, filiere, created_at)
+            VALUES (:username, :email, :password, :role, :filiere, :created_at)
+        ");
+        return $stmt->execute([
+            ':username' => $data['username'],
+            ':email' => $data['email'],
+            ':password' => $data['password'],
+            ':role' => $data['role'],
+            ':filiere' => $data['filiere'],
+            ':created_at' => $data['created_at']
+        ]);
+    }
+
+    public function updateRememberToken($userId, $token, $expires) {
+        $stmt = $this->pdo->prepare("
+            UPDATE users 
+            SET remember_token = :token, remember_token_expires = :expires 
+            WHERE id = :id
+        ");
+        return $stmt->execute([
+            ':token' => $token,
+            ':expires' => $expires,
+            ':id' => $userId
+        ]);
+    }
+
     // Enregistrement d'un nouvel utilisateur
-    public function register($username, $password, $role, $domain = null) {
+    public function register($username, $password, $role, $filiere = null) {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         $stmt = $this->pdo->prepare("
-            INSERT INTO users (username, password, role, domain)
-            VALUES (:username, :password, :role, :domain)
+            INSERT INTO users (username, password, role, filiere)
+            VALUES (:username, :password, :role, :filiere)
         ");
         return $stmt->execute([
             ':username' => $username,
             ':password' => $hashedPassword,
             ':role' => $role,
-            ':domain' => $domain
+            ':filiere' => $filiere
         ]);
     }
 
@@ -97,14 +134,14 @@ class User {
     }
 
     // Soumission d'un nouveau projet
-    public function submitProject($student_id, $partner_name, $theme, $file_path) {
+    public function submitProject($student_id, $binome, $theme, $file_path) {
         $stmt = $this->pdo->prepare("
-            INSERT INTO projects (student_id, partner_name, theme, file_path)
-            VALUES (:student_id, :partner_name, :theme, :file_path)
+            INSERT INTO projects (student_id, binome, theme, file_path)
+            VALUES (:student_id, :binome, :theme, :file_path)
         ");
         return $stmt->execute([
             ':student_id' => $student_id,
-            ':partner_name' => $partner_name,
+            ':partner_name' => $binome,
             ':theme' => $theme,
             ':file_path' => $file_path
         ]);
