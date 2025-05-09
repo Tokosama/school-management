@@ -21,70 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soumission du Cahier de Charge</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #f4f6f9;
-            margin: 0;
-            padding: 0;
-        }
+    <link rel="stylesheet" href="css/soumission.css">
 
-        .container {
-            max-width: 450px;
-            margin: 50px auto;
-            padding: 30px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-
-        label {
-            display: block;
-            margin-top: 15px;
-            margin-bottom: 5px;
-            color: #555;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-
-        button {
-            margin-top: 20px;
-            width: 100%;
-            padding: 12px;
-            background-color: #007BFF;
-            border: none;
-            color: white;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        .confirmation {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid #c3e6cb;
-            margin: 20px auto;
-            width: 90%;
-            text-align: center;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
