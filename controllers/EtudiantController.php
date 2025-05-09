@@ -5,42 +5,38 @@ require_once '../app/Models/Notification.php';
 
 class EtudiantController
 {
-    private $StudentModel;
+    private $studentModel;
     private $projectModel;
     private $notificationModel;
 
     public function __construct()
     {
-        $this->StudentModel = new Student();
+        $this->studentModel = new Student();
         $this->projectModel = new Project();
         $this->notificationModel = new Notification();
     }
 
     public function dashboard()
     {
-        // Vérification de l'authentification
-        if (!isset($_SESSION['Student_id']) || $_SESSION['Student_role'] !== 'student') {
+        if (!isset($_SESSION['student_id']) || $_SESSION['student_role'] !== 'student') {
             header('Location: /auth/login');
             exit;
         }
 
-        // Récupération des données
-        $student = $this->StudentModel->getStudentById($_SESSION['Student_id']);
-        $projects = $this->projectModel->getByStudent($_SESSION['Student_id']);
+        $student = $this->studentModel->getStudentById($_SESSION['student_id']);
+        $projects = $this->projectModel->getByStudent($_SESSION['student_id']);
 
         require_once '../app/Views/etudiant/dashboard.php';
     }
 
     public function showSubmissionForm()
     {
-        // Vérification de l'authentification
-        if (!isset($_SESSION['Student_id']) || $_SESSION['Student_role'] !== 'student') {
+        if (!isset($_SESSION['student_id']) || $_SESSION['student_role'] !== 'student') {
             header('Location: /auth/login');
             exit;
         }
 
-        // Vérifier si l'étudiant a déjà soumis un projet
-        $existingProjects = $this->projectModel->getByStudent($_SESSION['Student_id']);
+        $existingProjects = $this->projectModel->getByStudent($_SESSION['student_id']);
         if (!empty($existingProjects)) {
             $_SESSION['error'] = 'Vous avez déjà soumis un projet.';
             header('Location: /etudiant/dashboard');
@@ -52,105 +48,105 @@ class EtudiantController
 
     public function submitCahier()
     {
-        // Vérification de l'authentification et méthode POST
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['Student_id']) || $_SESSION['Student_role'] !== 'student') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['student_id']) 
+        || $_SESSION['student_role'] !== 'student') {
             header('Location: /auth/login');
             exit;
         }
 
-        // Validation des données
-        $title = trim($_POST['title'] ?? '');
-        $partnerName = trim($_POST['partner_name'] ?? '');
-        $description = trim($_POST['description'] ?? '');
-        $domains = $_POST['domains'] ?? [];
-        $file = $_FILES['file'] ?? null;
+        $data = [
+            'title' => trim($_POST['title'] ?? ''),
+            'partner_name' => trim($_POST['partner_name'] ?? ''),
+            'description' => trim($_POST['description'] ?? ''),
+            'domains' => $_POST['domains'] ?? [],
+            'file' => $_FILES['file'] ?? null
+        ];
 
-        $errors = [];
-        if (empty($title)) $errors[] = 'Le titre du projet est requis.';
-        if (empty($partnerName)) $errors[] = 'Le nom du binôme est requis.';
-        if (empty($domains)) $errors[] = 'Veuillez sélectionner au moins un domaine.';
-        if (!$file || $file['error'] !== UPLOAD_ERR_OK) $errors[] = 'Veuillez sélectionner un fichier valide.';
 
-        if (!empty($errors)) {
-            $_SESSION['error'] = implode('<br>', $errors);
-            $_SESSION['old'] = [
-                'title' => $title,
-                'partner_name' => $partnerName,
-                'description' => $description,
-                'domains' => $domains
-            ];
+        $filePath = $this->handleFileUpload($data['file']);
+        if (!$filePath) {
+            $_SESSION['error'] = 'Erreur lors du téléchargement du fichier';
             header('Location: /etudiant/submit');
             exit;
         }
 
-        // Traitement du fichier
+        try {
+            $this->createProject($_SESSION['student_id'], $data, $filePath);
+            $_SESSION['success'] = 'Projet soumis avec succès';
+            header('Location: /etudiant/dashboard');
+        } catch (Exception $e) {
+            unlink($filePath);
+            $_SESSION['error'] = $e->getMessage();
+            header('Location: /etudiant/submit');
+        }
+    }
+
+    private function validateProjectData($data)
+    {
+        $errors = [];
+        if (empty($data['title'])) $errors[] = 'Titre requis';
+        if (empty($data['partner_name'])) $errors[] = 'Nom du binôme requis';
+        if (empty($data['domains'])) $errors[] = 'Domaines requis';
+        if (!$data['file'] || $data['file']['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = 'Fichier invalide';
+        }
+        return $errors;
+    }
+
+    private function handleFileUpload($file)
+    {
         $uploadDir = '../uploads/';
         $filename = uniqid() . '_' . basename($file['name']);
         $filePath = $uploadDir . $filename;
+        
+        return move_uploaded_file($file['tmp_name'], $filePath) ? $filename : false;
+    }
 
-        if (move_uploaded_file($file['tmp_name'], $filePath)) {
-            try {
-                // Création du projet
-                $this->projectModel->create(
-                    studentId: $_SESSION['Student_id'],
-                    Nom_binome: $partnerName,
-                    title: $title,
-                    description: $description,
-                    domains: $domains,
-                    filePath: $filename
-                );
-
-                $_SESSION['success'] = 'Votre projet a été soumis avec succès.';
-                header('Location: /etudiant/dashboard');
-                exit;
-            } catch (InvalidArgumentException $e) {
-                // Suppression du fichier en cas d'erreur
-                unlink($filePath);
-                $_SESSION['error'] = $e->getMessage();
-                header('Location: /etudiant/submit');
-                exit;
-            }
-        } else {
-            $_SESSION['error'] = 'Une erreur est survenue lors du téléchargement du fichier.';
-            header('Location: /etudiant/submit');
-            exit;
-        }
+    private function createProject($studentId, $data, $filename)
+    {
+        return $this->projectModel->create(
+            $studentId,
+            $data['title'],
+            $data['partner_name'],
+            $data['description'],
+            $data['domains'],
+            $filename
+        );
     }
 
     public function relancer()
     {
-        // Vérification de l'authentification
-        if (!isset($_SESSION['Student_id']) || $_SESSION['Student_role'] !== 'student') {
+        if (!isset($_SESSION['student_id']) || $_SESSION['student_role'] !== 'student') {
             header('Location: /auth/login');
             exit;
         }
 
-        // Vérifier si l'étudiant a un projet en attente
-        $projects = $this->projectModel->getByStudent($_SESSION['Student_id']);
-        $hasPendingProject = false;
-
-        foreach ($projects as $project) {
-            if ($project['status'] === 'pending') {
-                $hasPendingProject = true;
-                break;
-            }
-        }
-
-        if (!$hasPendingProject) {
-            $_SESSION['error'] = 'Vous n\'avez pas de projet en attente d\'affectation.';
+        if (!$this->hasPendingProject($_SESSION['student_id'])) {
+            $_SESSION['error'] = 'Aucun projet en attente';
             header('Location: /etudiant/dashboard');
             exit;
         }
 
-        // Création de la notification
+        $this->sendReminderNotification($_SESSION['student_id']);
+        $_SESSION['success'] = 'Relance envoyée';
+        header('Location: /etudiant/dashboard');
+    }
+
+    private function hasPendingProject($studentId)
+    {
+        $projects = $this->projectModel->getByStudent($studentId);
+        foreach ($projects as $project) {
+            if ($project['status'] === 'pending') return true;
+        }
+        return false;
+    }
+
+    private function sendReminderNotification($studentId)
+    {
         $this->notificationModel->create(
-            $_SESSION['Student_id'],
+            $studentId,
             'Relance pour affectation de projet',
             'admin'
         );
-
-        $_SESSION['success'] = 'Votre relance a été envoyée à l\'administrateur.';
-        header('Location: /etudiant/dashboard');
-        exit;
     }
 }

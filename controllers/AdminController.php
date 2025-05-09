@@ -6,65 +6,37 @@ require_once __DIR__ . '/../Models/Notification.php';
 
 class AdminController
 {
-    private $StudentModel;
-    private $teacherModel;
-    private $projectModel;
-    private $notificationModel;
+    private $adminModel;
 
     public function __construct()
     {
-        $this->StudentModel = new Student();
-        $this->teacherModel = new Teacher();
-        $this->projectModel = new Project();
-        $this->notificationModel = new Notification();
+        $this->adminModel = new Admin();
     }
 
-    /**
-     * Vérifie les permissions admin
-     */
     private function checkAdminAuth()
     {
-        if (!isset($_SESSION['Student_id']) || $_SESSION['Student_role'] !== 'admin') {
+        if (!isset($_SESSION['admin_id']) || $_SESSION['admin_role'] !== 'admin') {
             header('Location: /auth/login');
             exit;
         }
     }
 
-    /**
-     * Tableau de bord admin
-     */
     public function dashboard()
     {
         $this->checkAdminAuth();
-
-        $stats = [
-            'pending_projects' => $this->projectModel->countByStatus('pending'),
-            'assigned_projects' => $this->projectModel->countByStatus('assigned'),
-            'teachers' => $this->teacherModel->count(),
-            'unread_notifications' => $this->notificationModel->getUnreadCount(null, 'admin')
-        ];
-
-        $recentNotifications = $this->notificationModel->getForStudent($_SESSION['Student_id'], 'admin', true, 5);
-
+        $stats = $this->adminModel->getDashboardStats();
+        $notifications = $this->adminModel->getAdminNotifications(true);
         require_once __DIR__ . '/../Views/admin/dashboard.php';
     }
 
-    /**
-     * Gestion des enseignants
-     */
     public function manageTeachers()
     {
         $this->checkAdminAuth();
-
-        $teachers = $this->teacherModel->getAll();
-        $domainOptions = ['AL', 'SRC', 'SI']; // Pour le formulaire
-
+        $teachers = $this->adminModel->getAllTeachers();
+        $domainOptions = ['AL', 'SRC', 'SI'];
         require_once __DIR__ . '/../Views/admin/teachers.php';
     }
 
-    /**
-     * Crée un nouvel enseignant
-     */
     public function createTeacher()
     {
         $this->checkAdminAuth();
@@ -74,52 +46,27 @@ class AdminController
             exit;
         }
 
-        $data = [
-            'Nom' => trim($_POST['Nom'] ?? ''),
-            'prenom' => trim($_POST['prenom'] ?? ''),
-            'email' => filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL),
-            'role' => trim($_POST['role'] ?? ''),
-            'domains' => $_POST['domains'] ?? []
-        ];
-
         try {
-            $this->teacherModel->create(
-                Nom: $data['Nom'],
-                prenom: $data['prenom'],
-                email: $data['email'],
-                role: $data['role'],
-                domains: $data['domains']
+            $this->adminModel->createTeacher(
+                $_POST['username'],
+                $_POST['domains']
             );
-
             $_SESSION['success'] = 'Enseignant créé avec succès';
-        } catch (InvalidArgumentException $e) {
+        } catch (Exception $e) {
             $_SESSION['error'] = $e->getMessage();
-            $_SESSION['old'] = $data;
-        } catch (PDOException $e) {
-            $_SESSION['error'] = 'Erreur de base de données : ' . $e->getMessage();
-            $_SESSION['old'] = $data;
         }
 
         header('Location: /admin/teachers');
-        exit;
     }
 
-    /**
-     * Affectation des projets
-     */
     public function assignProjects()
     {
         $this->checkAdminAuth();
-
-        $pendingProjects = $this->projectModel->getPendingProjects();
-        $teachers = $this->teacherModel->getAll();
-
+        $pendingProjects = $this->adminModel->getPendingProjects();
+        $teachers = $this->adminModel->getAllTeachers();
         require_once __DIR__ . '/../Views/admin/assign_projects.php';
     }
 
-    /**
-     * Traite l'affectation d'un projet
-     */
     public function processAssignment()
     {
         $this->checkAdminAuth();
@@ -129,74 +76,23 @@ class AdminController
             exit;
         }
 
-        $projectId = (int)($_POST['project_id'] ?? 0);
-        $teacherId = (int)($_POST['teacher_id'] ?? 0);
-
         try {
-            $success = $this->projectModel->assignTeacher($projectId, $teacherId);
-
-            if ($success) {
-                $project = $this->projectModel->getById($projectId);
-                $teacher = $this->teacherModel->getById($teacherId);
-
-                // Notification à l'étudiant
-                $this->notificationModel->create(
-                    $_SESSION['Student_id'],
-                    "Votre projet '{$project['title']}' a été affecté à {$teacher['first_name']} {$teacher['last_name']}",
-                    'student',
-                    $projectId
-                );
-
-                // Notification à l'enseignant
-                $this->notificationModel->create(
-                    $_SESSION['Student_id'],
-                    "Nouvelle affectation : Projet '{$project['title']}'",
-                    'teacher',
-                    $projectId
-                );
-
-                $_SESSION['success'] = 'Affectation réussie';
-            } else {
-                $_SESSION['error'] = 'Erreur lors de l\'affectation';
-            }
+            $this->adminModel->assignTeacherToProject(
+                $_POST['project_id'],
+                $_POST['teacher_id']
+            );
+            $_SESSION['success'] = 'Affectation réussie';
         } catch (Exception $e) {
             $_SESSION['error'] = $e->getMessage();
         }
 
         header('Location: /admin/assign-projects');
-        exit;
     }
 
-    /**
-     * Gestion des notifications
-     */
-    public function manageNotifications()
-    {
-        $this->checkAdminAuth();
-
-        $notifications = $this->notificationModel->getForStudent(
-            $_SESSION['Student_id'],
-            'admin',
-            false // Toutes les notifications
-        );
-
-        require_once __DIR__ . '/../Views/admin/notifications.php';
-    }
-
-    /**
-     * Marque une notification comme lue
-     */
     public function markNotificationAsRead($notificationId)
     {
         $this->checkAdminAuth();
-
-        if ($this->notificationModel->markAsRead($notificationId)) {
-            $_SESSION['success'] = 'Notification marquée comme lue';
-        } else {
-            $_SESSION['error'] = 'Erreur lors de la mise à jour';
-        }
-
+        $this->adminModel->markNotificationAsRead($notificationId);
         header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/admin/dashboard'));
-        exit;
     }
 }

@@ -117,6 +117,20 @@ class Notification {
         return $stmt->execute([':id' => $notificationId]);
     }
 
+    // Ajoutez cette méthode
+public function getForUser($userId, $role) {
+    $stmt = $this->pdo->prepare("
+        SELECT * FROM notifications 
+        WHERE user_id = :user_id AND recipient_role = :role
+        ORDER BY created_at DESC
+    ");
+    $stmt->execute([
+        ':user_id' => $userId,
+        ':role' => $role
+    ]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
     /**
      * Récupère le nombre de notifications non lues
      */

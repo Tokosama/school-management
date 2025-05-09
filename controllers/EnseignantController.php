@@ -13,23 +13,14 @@ class EnseignantController
         $this->notificationModel = new Notification();
     }
 
-    /**
-     * Affiche le tableau de bord enseignant
-     */
     public function dashboard()
     {
-        // Vérification de l'authentification et du rôle
-        if (!isset($_SESSION['Student_id']) || $_SESSION['Student_role'] !== 'teacher') {
-            header('Location: /auth/login');
-            exit;
-        }
+        $this->checkTeacherAuth();
 
-        // Récupération des projets assignés
-        $teacherId = $_SESSION['Student_id'];
+        $teacherId = $_SESSION['teacher_id'];
         $projects = $this->teacherModel->getAssignedProjects($teacherId);
 
-        // Récupération des notifications
-        $notifications = $this->notificationModel->getForStudent(
+        $notifications = $this->notificationModel->getForUser(
             $teacherId,
             'teacher',
             true // Unread only
@@ -38,22 +29,16 @@ class EnseignantController
         require_once __DIR__ . '/../Views/enseignant/dashboard.php';
     }
 
-    /**
-     * Affiche le formulaire de profil
-     */
     public function showProfile()
     {
         $this->checkTeacherAuth();
 
-        $teacher = $this->teacherModel->getById($_SESSION['Student_id']);
-        $domainOptions = ['AL', 'SRC', 'SI']; // Options pour le formulaire
+        $teacher = $this->teacherModel->getById($_SESSION['teacher_id']);
+        $domainOptions = ['AL', 'SRC', 'SI'];
 
         require_once __DIR__ . '/../Views/enseignant/profile.php';
     }
 
-    /**
-     * Met à jour le profil enseignant
-     */
     public function updateProfile()
     {
         $this->checkTeacherAuth();
@@ -63,18 +48,14 @@ class EnseignantController
             exit;
         }
 
-        $teacherId = $_SESSION['Student_id'];
-        $Nom = trim($_POST['Nom'] ?? '');
-        $prenom = trim($_POST['prenom'] ?? '');
-        $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
+        $teacherId = $_SESSION['teacher_id'];
+        $username = trim($_POST['username'] ?? '');
         $domains = $_POST['domains'] ?? [];
 
         try {
             $success = $this->teacherModel->update(
                 $teacherId,
-                $Nom,
-                $prenom,
-                $email,
+                $username,
                 $domains
             );
 
@@ -93,20 +74,14 @@ class EnseignantController
         exit;
     }
 
-    /**
-     * Affiche les projets assignés
-     */
     public function showProjects()
     {
         $this->checkTeacherAuth();
 
-        $projects = $this->teacherModel->getAssignedProjects($_SESSION['Student_id']);
+        $projects = $this->teacherModel->getAssignedProjects($_SESSION['teacher_id']);
         require_once __DIR__ . '/../Views/enseignant/projects.php';
     }
 
-    /**
-     * Marque une notification comme lue
-     */
     public function markNotificationAsRead($notificationId)
     {
         $this->checkTeacherAuth();
@@ -121,12 +96,9 @@ class EnseignantController
         exit;
     }
 
-    /**
-     * Vérifie l'authentification et le rôle enseignant
-     */
     private function checkTeacherAuth()
     {
-        if (!isset($_SESSION['Student_id']) || $_SESSION['Student_role'] !== 'teacher') {
+        if (!isset($_SESSION['teacher_id']) || $_SESSION['teacher_role'] !== 'teacher') {
             header('Location: /auth/login');
             exit;
         }

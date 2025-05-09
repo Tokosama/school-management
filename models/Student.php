@@ -132,6 +132,28 @@ class Student {
         ]);
     }
 
+    public function findByEmail(string $email): ?array
+{
+    $stmt = $this->pdo->prepare("
+        SELECT id, username, domains 
+        FROM students 
+        WHERE email = :email
+    ");
+    $stmt->execute([':email' => $email]);
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+}
+
+public function findByStudentname(string $username): ?array
+{
+    $stmt = $this->pdo->prepare("
+        SELECT id, username, domains 
+        FROM students 
+        WHERE username = :username
+    ");
+    $stmt->execute([':username' => $username]);
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+}
+
     // Récupérer les projets en attente d'affectation
     public function getPendingProjects() {
         $stmt = $this->pdo->query("
