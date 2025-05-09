@@ -1,35 +1,59 @@
+<?php
+session_start();
+include 'views/header.php';
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/signup.css">
     <title>Inscription</title>
-
+    <link rel="stylesheet" href="views/css/signup.css">
 </head>
 <body>
-    <div class="signup-container">
-        <div class="signup-box">
-            <h2>Créer un compte</h2>
-            <form method="POST" action="index.php?action=signup">
-                <div class="input-group">
-                    <label for="username">Nom d'utilisateur</label>
-                    <input type="text" id="username" name="username" placeholder="Choisissez un nom d'utilisateur" required>
-                </div>
-                <div class="input-group">
-                    <label for="password">Mot de passe</label>
-                    <input type="password" id="password" name="password" placeholder="Choisissez un mot de passe" required>
-                </div>
-                <div class="input-group">
-                    <label for="confirm_password">Confirmer le mot de passe</label>
-                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirmez votre mot de passe" required>
-                </div>
-                <button type="submit" class="signup-btn">S'inscrire</button>
-                <div class="login-link">
-                    <p>Vous avez déjà un compte ? <a href="login.php">Se connecter</a></p>
-                </div>
-            </form>
+<div class="signup-container">
+    <div class="signup-box">
+        <h2>Inscription</h2>
+        <form action="index.php?action=signup" method="POST">
+
+            <div class="input-group">
+                <label for="last_name">Nom</label>
+                <input type="text" name="last_name" required>
+            </div>
+
+            <div class="input-group">
+                <label for="first_name">Prénom</label>
+                <input type="text" name="first_name" required>
+            </div>
+
+            <div class="input-group">
+                <label for="email">Email</label>
+                <input type="email" name="email" required>
+            </div>
+
+            <div class="input-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" name="password" required>
+            </div>
+
+            <div class="input-group">
+                <label for="filiere">Filière</label>
+                <select name="filiere" id="filiere" required>
+                    <option value="" selected disabled>-- Veuillez choisir une option --</option>
+                    <option value="AL">AL (Algorithmique Logicielle)</option>
+                    <option value="SRC">SRC (Systèmes, Réseaux et Cloud)</option>
+                    <option value="SI">SI (Système d'Information)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="signup-btn">S'inscrire</button>
+        </form>
+
+        <div class="signup-link">
+            <p>Déjà un compte ? <a href="index.php?action=login">Se connecter</a></p>
         </div>
     </div>
+</div>
 </body>
 </html>

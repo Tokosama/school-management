@@ -2,12 +2,11 @@
 session_start();
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_id'] !== 'enseignant') {
-    header('Location: login.php');
+    header('Location: index.php?action=login');
     exit();
 }
 
 // Logique pour afficher les étudiants non affectés et les affecter
-// Exemple statique (à remplacer par une vraie logique avec la base de données)
 $students = [
     ['name' => 'Etudiant 1', 'assigned' => false],
     ['name' => 'Etudiant 2', 'assigned' => false],
@@ -20,14 +19,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
+<!-- Inclusion du header -->
+<?php include 'views/header.php'; ?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/affectation.css">
+    <link rel="stylesheet" href="views/css/affectation.css">
     <title>Affectations des Étudiants</title>
-    
 </head>
 <body>
     <div class="container">
@@ -39,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php if (!$student['assigned']): ?>
                     <li>
                         <?php echo $student['name']; ?>
-                        <form action="teacher_assignment.php" method="POST" style="display:inline;">
+                        <form action="index.php?action=affectation" method="POST" style="display:inline;">
                             <input type="hidden" name="student_name" value="<?php echo $student['name']; ?>">
                             <button type="submit">Affecter</button>
                         </form>
@@ -56,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ?>
         </div>
 
-        <a href="dashboard.php">Retour au Tableau de Bord</a>
+        <a href="index.php?action=dashboard">Retour au Tableau de Bord</a>
     </div>
 </body>
 </html>

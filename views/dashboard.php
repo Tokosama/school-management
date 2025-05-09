@@ -2,7 +2,7 @@
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: index.php?action=login');
     exit();
 }
 
@@ -12,14 +12,16 @@ $user_id = $_SESSION['user_id'];
 $is_student = $user_id === 'etudiant'; 
 ?>
 
+<!-- Inclusion du header -->
+<?php include 'views/header.php'; ?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="views/css/dashboard.css">
     <title>Tableau de bord</title>
-
 </head>
 <body>
     <div class="container">
@@ -27,13 +29,13 @@ $is_student = $user_id === 'etudiant';
 
         <?php if ($is_student): ?>
             <p>Soumettez votre cahier de charge.</p>
-            <a href="soumission.php">Soumettre le cahier de charge</a>
+            <a href="index.php?action=soumission">Soumettre le cahier de charge</a>
         <?php else: ?>
             <p>Gestion des affectations.</p>
-            <a href="teacher_assignment.php">Voir les affectations</a>
+            <a href="index.php?action=affectation">Voir les affectations</a>
         <?php endif; ?>
 
-        <a href="logout.php">Se déconnecter</a>
+        <a href="index.php?action=logout">Se déconnecter</a>
     </div>
 </body>
 </html>
