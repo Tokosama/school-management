@@ -75,7 +75,7 @@ class Admin {
      * Gestion des projets
      */
     public function assignTeacherToProject($projectId, $teacherId) {
-        $project = $this->projectModel->getById($projectId);
+        $project = $this->projectModel->getById(id: $projectId);
         if (!$project) {
             throw new Exception("Projet introuvable");
         }

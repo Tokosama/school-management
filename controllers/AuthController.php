@@ -7,7 +7,7 @@ class AuthController
     public function showRegisterForm()
     {
         // Vérification si l'utilisateur est déjà connecté
-        if (isset($_SESSION['student_id'])) {
+        if (isset($_SESSION['id'])) {
             header('Location: /');
             exit;
         }
@@ -24,12 +24,10 @@ class AuthController
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Nettoyage des entrées
-            $Studentname = trim($_POST['Studentname'] ?? '');
+            $Studentname = trim($_POST['username'] ?? '');
             $password = $_POST['password'] ?? '';
-            $role = $_POST['role'] ?? '';
-            $filiere = $_POST['filiere'] ?? '';
-            $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
-
+            $domains = $_POST['domains'] ?? '';
+            
             // Validation
             $errors = [];
             
@@ -41,25 +39,19 @@ class AuthController
                 $errors[] = 'Le mot de passe doit contenir au moins 6 caractères.';
             }
             
-            if (!in_array($role, ['etudiant', 'enseignant', 'admin'])) {
-                $errors[] = 'Rôle invalide.';
-            }
             
-            if (empty($filiere)) {
+            
+            if (empty($domains)) {
                 $errors[] = 'La filiere est requis.';
             }
             
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $errors[] = 'Adresse email invalide.';
-            }
 
             if (!empty($errors)) {
                 $_SESSION['error'] = implode('<br>', $errors);
                 $_SESSION['old'] = [
-                    'Studentname' => $Studentname,
-                    'email' => $email,
-                    'role' => $role,
-                    'filiere' => $filiere
+                    'username' => $Studentname,
+                    'password' => $password,
+                    'domains' => $domains
                 ];
                 header('Location: /auth/register');
                 exit;
@@ -70,35 +62,21 @@ class AuthController
             if ($StudentModel->findByStudentname($Studentname)) {
                 $_SESSION['error'] = 'Un compte avec ce nom d\'utilisateur existe déjà.';
                 $_SESSION['old'] = [
-                    'Studentname' => $Studentname,
-                    'email' => $email,
-                    'role' => $role,
-                    'filiere' => $filiere
+                    'username' => $Studentname,
+                    'password' => $password,
+                    'domains' => $domains
                 ];
                 header('Location: /auth/register');
                 exit;
-            }
-            
-            if ($StudentModel->findByEmail($email)) {
-                $_SESSION['error'] = 'Un compte avec cette adresse email existe déjà.';
-                $_SESSION['old'] = [
-                    'Studentname' => $Studentname,
-                    'email' => $email,
-                    'role' => $role,
-                    'filiere' => $filiere
-                ];
-                header('Location: /auth/register');
-                exit;
-            }
+            }       
+           
 
             // Enregistrement de l'utilisateur
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             $StudentId = $StudentModel->create([
                 'Studentname' => $Studentname,
-                'email' => $email,
                 'password' => $hashedPassword,
-                'role' => $role,
-                'filiere' => $filiere,
+                'domains' => $domains,
                 'created_at' => date('Y-m-d H:i:s')
             ]);
 
@@ -138,13 +116,13 @@ class AuthController
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Nettoyage des entrées
-            $Studentname = trim($_POST['Studentname'] ?? '');
+            $Studentname = trim($_POST['username'] ?? '');
             $password = $_POST['password'] ?? '';
             $remember = isset($_POST['remember']);
 
             $StudentModel = new Student();
             
-            // Recherche par email ou Studentname
+            // Recherche par email ou username
             if (filter_var($Studentname, FILTER_VALIDATE_EMAIL)) {
                 $Student = $StudentModel->findByEmail($Studentname);
             } else {
@@ -156,9 +134,7 @@ class AuthController
                 session_regenerate_id(true);
                 
                 $_SESSION['Student_id'] = $Student['id'];
-                $_SESSION['Student_role'] = $Student['role'];
-                $_SESSION['Student_email'] = $Student['email'];
-                $_SESSION['Student_Studentname'] = $Student['Studentname'];
+                $_SESSION['username'] = $Student['username'];
 
                 // Option "Se souvenir de moi"
                 if ($remember) {

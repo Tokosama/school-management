@@ -3,6 +3,7 @@ require_once __DIR__ . '/../Models/Student.php';
 require_once __DIR__ . '/../Models/Teacher.php';
 require_once __DIR__ . '/../Models/Project.php';
 require_once __DIR__ . '/../Models/Notification.php';
+require_once __DIR__ . '/../Models/Admin.php';
 
 class AdminController
 {
@@ -15,7 +16,7 @@ class AdminController
 
     private function checkAdminAuth()
     {
-        if (!isset($_SESSION['admin_id']) || $_SESSION['admin_role'] !== 'admin') {
+        if (!isset($_SESSION['id'])) {
             header('Location: /auth/login');
             exit;
         }

@@ -18,7 +18,7 @@ class EtudiantController
 
     public function dashboard()
     {
-        if (!isset($_SESSION['student_id']) || $_SESSION['student_role'] !== 'student') {
+        if (!isset($_SESSION['student_id']) ) {
             header('Location: /auth/login');
             exit;
         }
@@ -31,7 +31,7 @@ class EtudiantController
 
     public function showSubmissionForm()
     {
-        if (!isset($_SESSION['student_id']) || $_SESSION['student_role'] !== 'student') {
+        if (!isset($_SESSION['student_id']) ) {
             header('Location: /auth/login');
             exit;
         }
@@ -84,8 +84,8 @@ class EtudiantController
     private function validateProjectData($data)
     {
         $errors = [];
-        if (empty($data['title'])) $errors[] = 'Titre requis';
-        if (empty($data['partner_name'])) $errors[] = 'Nom du binôme requis';
+        if (empty($data['theme'])) $errors[] = 'Theme requis';
+        if (empty($data['binome_name'])) $errors[] = 'Nom du binôme requis';
         if (empty($data['domains'])) $errors[] = 'Domaines requis';
         if (!$data['file'] || $data['file']['error'] !== UPLOAD_ERR_OK) {
             $errors[] = 'Fichier invalide';
@@ -105,18 +105,20 @@ class EtudiantController
     private function createProject($studentId, $data, $filename)
     {
         return $this->projectModel->create(
-            $studentId,
-            $data['title'],
-            $data['partner_name'],
+            $studentId['student_id'],
+            $data['teacher_id'],
+            $data['theme'],
+            $data['binome_name'],
             $data['description'],
             $data['domains'],
-            $filename
+            $filename['file_path'],
+            $data['status']
         );
     }
 
     public function relancer()
     {
-        if (!isset($_SESSION['student_id']) || $_SESSION['student_role'] !== 'student') {
+        if (!isset($_SESSION['student_id']) ) {
             header('Location: /auth/login');
             exit;
         }

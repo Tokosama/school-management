@@ -98,7 +98,7 @@ class EnseignantController
 
     private function checkTeacherAuth()
     {
-        if (!isset($_SESSION['teacher_id']) || $_SESSION['teacher_role'] !== 'teacher') {
+        if (!isset($_SESSION['teacher_id']) ) {
             header('Location: /auth/login');
             exit;
         }
