@@ -15,7 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <!-- Inclusion du header -->
-<?php include 'views/header.php'; ?>
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -28,13 +27,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="container">
         <h1>Affectations des Projets Étudiants</h1>
-
+<?php if (isset($_SESSION['success'])): ?>
+    <div class="alert alert-success">
+        <?php echo htmlspecialchars($_SESSION['success']); ?>
+    </div>
+    <?php unset($_SESSION['success']); ?>
+<?php endif; ?>
+        <?php if (isset($_SESSION['login-error'])): ?>
+    <div class="alert alert-danger">
+        <?php echo htmlspecialchars($_SESSION['login-error']); ?>
+    </div>
+    <?php unset($_SESSION['login-error']); ?>
+<?php endif; ?>
         <h2>Projets en attente d'affectation</h2>
 
         <?php if (!empty($pendingProjects)): ?>
             <ul>
                 <?php foreach ($pendingProjects as $project): ?>
-                    <li>
+                    <li class="affectation-li">
                         <strong>Thème :</strong> <?php echo htmlspecialchars($project['theme']); ?><br>
                         <strong>Étudiant :</strong> <?php echo htmlspecialchars($project['student_name']); ?><br>
                         <strong>Binôme :</strong> <?php echo htmlspecialchars($project['binome_name']); ?><br>

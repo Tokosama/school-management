@@ -12,7 +12,11 @@ class EnseignantController
         $this->teacherModel = new Teacher();
         $this->notificationModel = new Notification();
     }
-
+public function lister()
+    {
+        $enseignants = $this->teacherModel->getAll();
+    require_once __DIR__ . '/../views/enseignants.php'; // Charger la vue de la page de connexion admin
+    }
     public function dashboard()
     {
         $this->checkTeacherAuth();

@@ -1,6 +1,5 @@
 <?php
 session_start();
-include 'header.php'; // Inclure le header commun
 
 // Vérifier si l'utilisateur est connecté
 if (!isset($_SESSION['Student_id'])) {

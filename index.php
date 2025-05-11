@@ -4,12 +4,39 @@ session_start();
 // Liste des actions autorisées
 $action = $_GET['action'] ?? 'student/login';
 
+
+
+
+// Liste des routes protégées pour chaque rôle
+$protectedStudentRoutes = ['dashboard-etudiant', 'soumission', 'relanceProjet'];
+$protectedAdminRoutes = ['dashboard-admin', 'affectation', 'ajouterEnseignant', 'listeEtudiants'];
+
+// Vérification accès étudiant
+if (in_array($action ?? '', $protectedStudentRoutes)) {
+    if (!isset($_SESSION['student_id'])) {
+        header('Location: index.php?action=student/login');
+        exit();
+    }
+}
+
+// Vérification accès admin
+if (in_array($action ?? '', $protectedAdminRoutes)) {
+    if (!isset($_SESSION['admin_id'])) {
+        header('Location: index.php?action=admin/login');
+        exit();
+    }
+}
+
+
+
 // Inclure les contrôleurs nécessaires
 require_once 'config/database.php'; // définit $pdo
 
 require_once 'controllers/AuthController.php';
 require_once 'controllers/EtudiantController.php';
 require_once 'controllers/AdminController.php';
+require_once 'controllers/EnseignantController.php';
+
 
 //require_once 'controllers/DashboardController.php';
 // Ajoute ici d'autres contrôleurs au besoin
@@ -56,6 +83,11 @@ switch ($action) {
         $controller = new AuthController();
         $controller->adminSignup();
         break;
+
+    case 'logout':
+        $controller = new AuthController();
+        $controller->logout();
+        break;
     case 'soumission':
         $controller = new EtudiantController();
         $controller->showSubmissionForm();
@@ -67,6 +99,10 @@ switch ($action) {
     case 'ajouterEnseignant':
         $controller = new AdminController();
         $controller->createTeacher();
+        break;
+      case 'listerEnseignant':
+        $controller = new EnseignantController();
+        $controller->lister();
         break;
     case 'processAssignment':
         $controller = new AdminController();

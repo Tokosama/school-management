@@ -87,14 +87,14 @@ private function handleFileUpload($file)
 
     if (empty($data['binome_name']) || empty($data['theme']) || empty($data['domains']) || !$data['file']) {
         $_SESSION['error'] = 'Tous les champs obligatoires doivent être remplis.';
-        header('Location: /etudiant/submit');
+        header('Location: index.php?action=soumission');
         exit;
     }
 
     $filePath = $this->handleFileUpload($data['file']);
     if (!$filePath) {
         $_SESSION['error'] = 'Erreur lors du téléchargement du fichier.';
-        header('Location: /etudiant/submit');
+        header('Location:  index.php?action=soumission');
         exit;
     }
     
@@ -103,6 +103,7 @@ private function handleFileUpload($file)
 
     try {
         $this->createProject($_SESSION['student_id'], $data, $filePath);
+        $_SESSION['success'] = 'Projet soumis avec succès.';
         $_SESSION['success'] = 'Projet soumis avec succès.';
         header('Location: index.php?action=dashboard-etudiant');
         

@@ -6,7 +6,6 @@
 //     exit();
 // }
 // ?>
-<?php include 'views/header.php'; ?>
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -21,6 +20,18 @@
 <div class="login-container">
     <div class="login-box">
         <h2>Connexion</h2>
+           <?php if (isset($_SESSION['success'])): ?>
+    <div class="alert alert-success">
+        <?php echo htmlspecialchars($_SESSION['success']); ?>
+    </div>
+    <?php unset($_SESSION['success']); ?>
+<?php endif; ?>
+        <?php if (isset($_SESSION['error'])): ?>
+    <div class="alert alert-danger">
+        <?php echo htmlspecialchars($_SESSION['error']); ?>
+    </div>
+    <?php unset($_SESSION['error']); ?>
+<?php endif; ?>
         <form action="/index.php?action=admin/login" method="POST">
             <div class="input-group">
                 <label for="username">Nom d'utilisateur</label>

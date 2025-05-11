@@ -16,7 +16,7 @@ class AdminController
 
     private function checkAdminAuth()
     {
-        if (!isset($_SESSION['student_id'])) {
+        if (!isset($_SESSION['admin_id'])) {
             header('Location: /auth/login');
             exit;
         }

@@ -1,6 +1,5 @@
 <?php
 session_start();
-include 'header.php'; // Inclure le header commun
 
 if (!isset($_SESSION['student_id'])) {
     header('Location: login.php');
@@ -38,56 +37,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <section id="soumission-cahier-charges" class="form-container">
     <h2 class="form-title">Soumettre un Cahier des Charges</h2>
-    <form id="form-cahier-charges" class="space-y-4" enctype="multipart/form-data" method="POST" action="index.php?action=soumettre-projet">
-    <div class="form-group">
-            <label for="theme" class="form-label">Thème du projet <span class="text-red-500">*</span></label>
-            <input type="text" id="theme" name="theme" class="form-input" placeholder="Titre du thème" required>
-        </div>
 
-        <div class="form-group">
-            <label for="binome_name" class="form-label">Nom du binôme <span class="text-red-500">*</span></label>
-            <input type="text" id="binome_name" name="binome_name" class="form-input" placeholder="Nom du binôme" required>
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger">
+            <?php echo nl2br(htmlspecialchars($_SESSION['error'])); ?>
         </div>
+        <?php unset($_SESSION['error']); ?>
+    <?php else: ?>
+        <form id="form-cahier-charges" class="space-y-4" enctype="multipart/form-data" method="POST" action="index.php?action=soumettre-projet">
+            <div class="form-group">
+                <label for="theme" class="form-label">Thème du projet <span class="text-red-500">*</span></label>
+                <input type="text" id="theme" name="theme" class="form-input" placeholder="Titre du thème" required>
+            </div>
 
-    
+            <div class="form-group">
+                <label for="binome_name" class="form-label">Nom du binôme <span class="text-red-500">*</span></label>
+                <input type="text" id="binome_name" name="binome_name" class="form-input" placeholder="Nom du binôme" required>
+            </div>
 
-        <div class="form-group">
-            <label for="description" class="form-label">Description du projet</label>
-            <textarea id="description" name="description" class="form-textarea" placeholder="Description du projet (facultatif)"></textarea>
-        </div>
+            <div class="form-group">
+                <label for="description" class="form-label">Description du projet</label>
+                <textarea id="description" name="description" class="form-textarea" placeholder="Description du projet (facultatif)"></textarea>
+            </div>
 
-        <div class="form-group">
-            <label for="domains" class="form-label">Domaine <span class="text-red-500">*</span></label>
-            <select id="domains" name="domains" class="form-input" required>
-                <option value="">-- Sélectionnez un domaine --</option>
-                <option value="AL">AL</option>
-                <option value="SRC">SRC</option>
-                <option value="SI">SI</option>
-                <option value="AL/SI">AL/SI</option>
-                <option value="AL/SRC">AL/SRC</option>
-                <option value="SI/SRC">SI/SRC</option>
-                <option value="AL/SI/SRC">AL/SI/SRC</option>
-            </select>
-        </div>
+            <div class="form-group">
+                <label for="domains" class="form-label">Domaine <span class="text-red-500">*</span></label>
+                <select id="domains" name="domains" class="form-input" required>
+                    <option value="">-- Sélectionnez un domaine --</option>
+                    <option value="AL">AL</option>
+                    <option value="SRC">SRC</option>
+                    <option value="SI">SI</option>
+                    <option value="AL/SI">AL/SI</option>
+                    <option value="AL/SRC">AL/SRC</option>
+                    <option value="SI/SRC">SI/SRC</option>
+                    <option value="AL/SI/SRC">AL/SI/SRC</option>
+                </select>
+            </div>
 
-        <div class="form-group">
-            <label for="file_path" class="form-label">Fichier du cahier des charges <span class="text-red-500">*</span></label>
-            <input type="file" id="file_path" name="file_path" class="form-input" accept=".pdf,.doc,.docx" required>
-            <p class="text-muted mt-1">Formats acceptés : .pdf, .doc, .docx (Max 5Mo)</p>
-        </div>
+            <div class="form-group">
+                <label for="file_path" class="form-label">Fichier du cahier des charges <span class="text-red-500">*</span></label>
+                <input type="file" id="file_path" name="file_path" class="form-input" accept=".pdf,.doc,.docx" required>
+                <p class="text-muted mt-1">Formats acceptés : .pdf, .doc, .docx (Max 5Mo)</p>
+            </div>
 
-        <div class="form-group">
-            <button type="submit" class="form-button form-button-primary">
-                Soumettre le cahier des charges
-            </button>
-            <button type="reset" class="form-button form-button-secondary">
-                Effacer
-            </button>
-        </div>
-    </form>
+            <div class="form-group">
+                <button type="submit" class="form-button form-button-primary">
+                    Soumettre le cahier des charges
+                </button>
+                <button type="reset" class="form-button form-button-secondary">
+                    Effacer
+                </button>
+            </div>
+        </form>
+    <?php endif; ?>
 
     <div id="message-cahier" class="mt-4"></div>
 </section>
+
 
 </body>
 </html>

@@ -1,0 +1,55 @@
+/* Navbar container */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #1e1e2f;
+    padding: 15px 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    margin-bottom: 50px;
+}
+
+/* Navigation section */
+.navbar-nav {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* Navigation list */
+.navbar-list {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 25px;
+}
+
+/* Navigation items */
+.navbar-item {
+    
+}
+
+/* Navigation links */
+.navbar-link {
+display: inline-block;
+    margin: 10px 5px;
+    padding: 12px 20px;
+    text-decoration: none;
+    background-color: #007BFF;
+    color: white;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.navbar-link:hover {
+    color: #00bcd4;
+    border-bottom: 2px solid #00bcd4;
+}
+
+/* Ensure page content is not hidden under navbar */
+body {
+    padding-top: 70px;
+}

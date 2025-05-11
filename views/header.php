@@ -1,18 +1,25 @@
 <?php
-$current_action = $_GET['action'] ?? 'login';
+session_start();
 ?>
+<link rel="stylesheet" href="views/css/header.css">
 
-<header>
-    <nav>
-        <ul>
-            <?php if (!isset($_SESSION['student_id']) && $current_action !== 'login' && $current_action !== 'signup'): ?>
-                <!-- Si l'utilisateur n'est pas connecté et n'est pas sur la page connexion ou inscription, afficher les liens -->
-                <li><a href="index.php?action=login" class="<?php echo ($current_action == 'login') ? 'active' : ''; ?>">Connexion</a></li>
-                <li><a href="index.php?action=signup" class="<?php echo ($current_action == 'signup') ? 'active' : ''; ?>">Inscription</a></li>
-            <?php elseif (isset($_SESSION['student_id'])): ?>
-                <!-- Si l'utilisateur est connecté, afficher Dashboard et déconnexion -->
-                <li><a href="index.php?action=dashboard" class="<?php echo ($current_action == 'dashboard') ? 'active' : ''; ?>">Dashboard</a></li>
-                <li><a href="index.php?action=logout" class="<?php echo ($current_action == 'logout') ? 'active' : ''; ?>">Se déconnecter</a></li>
+<header class="navbar">
+    <nav class="navbar-nav">
+        <ul class="navbar-list">
+            <?php if (isset($_SESSION['student_id'])): ?>
+                <!-- Navigation pour étudiant -->
+                <li class="navbar-item"><a class="navbar-link" href="index.php?action=dashboard-etudiant">Dashboard</a></li>
+                <li class="navbar-item"><a class="navbar-link" href="index.php?action=soumission">Soumission</a></li>
+                <li class="navbar-item"><a class="navbar-link" href="index.php?action=logout">Se déconnecter</a></li>
+
+            <?php elseif (isset($_SESSION['admin_id'])): ?>
+                <!-- Navigation pour admin -->
+                <li class="navbar-item"><a class="navbar-link" href="index.php?action=dashboard-admin">Dashboard</a></li>
+                <li class="navbar-item"><a class="navbar-link" href="index.php?action=ajouterEnseignant">Créer Enseignant</a></li>
+                <li class="navbar-item"><a class="navbar-link" href="index.php?action=listerEnseignant">Liste des Enseignants</a></li>
+
+                <li class="navbar-item"><a class="navbar-link" href="index.php?action=affectation">Affectation</a></li>
+                <li class="navbar-item"><a class="navbar-link" href="index.php?action=logout">Se déconnecter</a></li>
             <?php endif; ?>
         </ul>
     </nav>

@@ -1,77 +1,116 @@
 body {
     font-family: 'Segoe UI', sans-serif;
-    background-color: #f2f5f9;
-    margin: 0;
+    background-color: #f0f2f5;
+    margin-top:20px;
     padding: 0;
 }
 
 .container {
-    max-width: 700px;
-    margin: 60px auto;
-    padding: 30px;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    max-width: 900px;
+    margin: 70px auto;
+    padding: 40px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2 {
+    color: #333;
+    margin-bottom: 20px;
     text-align: center;
 }
 
-h1 {
-    color: #333;
-}
-
-h2 {
-    color: #555;
-    margin-bottom: 20px;
-}
-
 ul {
-    list-style-type: none;
+    list-style: none;
     padding: 0;
 }
 
-li {
+.affectation-li {
     background-color: #f9f9f9;
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 8px;
+    margin-bottom: 20px;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+    text-align: left;
+}
+
+.affectation-li strong {
+    display: inline-block;
+    width: 120px;
+    color: #444;
+}
+
+.affectation-li form {
+    margin-top: 15px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+select {
+    padding: 8px;
+    font-size: 1em;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    min-width: 200px;
 }
 
 button {
-    padding: 8px 15px;
+    padding: 8px 16px;
     font-size: 1em;
     background-color: #28a745;
-    color: white;
+    color: #fff;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     cursor: pointer;
+    transition: background-color 0.2s;
 }
 
 button:hover {
     background-color: #218838;
 }
 
-.notification {
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.alert-success {
     background-color: #d4edda;
     color: #155724;
-    padding: 15px;
-    border-radius: 6px;
     border: 1px solid #c3e6cb;
-    font-weight: bold;
-    margin-top: 20px;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.notification {
+    background-color: #e9f7ef;
+    color: #276749;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 30px;
+    font-weight: 500;
+    text-align: center;
 }
 
 a {
     display: inline-block;
     margin-top: 30px;
-    padding: 12px 20px;
+    padding: 12px 24px;
     text-decoration: none;
-    background-color: #007BFF;
-    color: white;
+    background-color: #007bff;
+    color: #fff;
     border-radius: 6px;
-    font-weight: bold;
+    font-weight: 500;
+    transition: background-color 0.2s;
 }
 
 a:hover {

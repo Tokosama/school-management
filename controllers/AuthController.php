@@ -54,7 +54,8 @@ class AuthController
                     'password' => $password,
                     'domains' => $domains
                 ];
-                header('Location: /auth/signup');
+                var_dump($_SESSION['error']);
+                header('Location: index.php?action=student/signup');
                 exit;
             }
 
@@ -80,14 +81,13 @@ class AuthController
                 'domains' => $domains,
                 'created_at' => date('Y-m-d H:i:s')
             ]);
-var_dump($StudentId);
             if ($StudentId) {
                 $_SESSION['success'] = 'Inscription réussie. Vous pouvez maintenant vous connecter.';
-                header('Location: /student/auth/login');
+                header('Location:  index.php?action=student/login');
                 exit;
             } else {
-                $_SESSION['error'] = 'Une erreur est survenue lors de l\'inscription.';
-                header('Location: /auth/signup');
+                   $_SESSION['signup-error'] = 'Les champs saisie doit etre valide';
+            header('Location: index.php?action=student/signup');
                 exit;
             }
         }
@@ -196,16 +196,15 @@ var_dump("teeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
                 
                 $_SESSION['student_id'] = $Student['id'];
                 $_SESSION['username'] = $Student['username'];
-
+                unset($_SESSION['admin_id']);
                 // Redirection en fonction du rôle
               
                     header('Location: index.php?action=dashboard-etudiant');
                 exit;
             } else {
-                var_dump("incoreectttt noooo");
 
-                $_SESSION['error'] = 'Identifiants incorrects.';
-                require_once __DIR__ . '/../views/auth/login.php';
+                $_SESSION['login-error'] = 'Identifiants incorrects.';
+            header('Location: index.php?action=student/login');
                 exit;
             }
             
@@ -236,21 +235,15 @@ public function adminLogin()
             $_SESSION['admin_id'] = $admin['id'];
             $_SESSION['username'] = $admin['username'];
 
-            // Option "Se souvenir de moi"
-            if ($remember) {
-                $token = bin2hex(random_bytes(32));
-                $expires = time() + 60 * 60 * 24 * 30; // 30 jours
-                
-                setcookie('remember_token', $token, $expires, '/', '', true, true);
-              //  $AdminModel->updateRememberToken($admin['id'], $token, date('Y-m-d H:i:s', $expires));
-            }
+                unset($_SESSION['student_id']);
+           
                    
-                header('Location: index.php?action=affectation');
+                header('Location: index.php?action=dashboard-admin');
                 exit;
             // Redirection vers la page d'administration après la connexion
         } else {
             $_SESSION['error'] = 'Identifiants incorrects.';
-            require_once __DIR__ . '/../views/admin/auth/login.php'; // Charger la vue pour la page de connexion admin
+                header('Location: index.php?action=admin/login');
             exit;
         }
     }
@@ -272,7 +265,7 @@ public function adminLogin()
         $_SESSION = array();
         session_destroy();
         
-        header('Location: /auth/login');
+        header('Location:index.php?action=student/login');
         exit;
     }
 }

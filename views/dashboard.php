@@ -13,7 +13,6 @@ $is_student = $Student_id === 'etudiant';
 ?>
 
 <!-- Inclusion du header -->
-<?php include 'views/header.php'; ?>
 
 <!DOCTYPE html>
 <html lang="fr">

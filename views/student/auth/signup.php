@@ -1,6 +1,5 @@
 <?php
 session_start();
-include 'views/header.php';
 ?>
 
 <!DOCTYPE html>
@@ -15,6 +14,12 @@ include 'views/header.php';
 <div class="signup-container">
     <div class="signup-box">
         <h2>Inscription</h2>
+        <?php if (isset($_SESSION['error'])): ?>
+    <div class="alert alert-danger">
+        <?php echo$_SESSION['error']; ?>
+    </div>
+    <?php unset($_SESSION['login-error']); ?>
+<?php endif; ?>
         <form action="index.php?action=student/signup" method="POST">
 
             <div class="input-group">
