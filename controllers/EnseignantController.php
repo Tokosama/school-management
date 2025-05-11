@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/../Models/Teacher.php';
-require_once __DIR__ . '/../Models/Notification.php';
+require_once __DIR__ . '/../models/Teacher.php';
+require_once __DIR__ . '/../models/Notification.php';
 
 class EnseignantController
 {
@@ -23,7 +23,7 @@ class EnseignantController
         $notifications = $this->notificationModel->getForUser(
             $teacherId,
             'teacher',
-            true // Unread only
+             // Unread only
         );
 
         require_once __DIR__ . '/../Views/enseignant/dashboard.php';

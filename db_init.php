@@ -1,16 +1,16 @@
 <?php
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/models/Student.php';
-require_once __DIR__ . '/models/Admoin.php';
+require_once __DIR__ . '/models/Admin.php';
 require_once __DIR__ . '/models/Teacher.php';
 require_once __DIR__ . '/models/Project.php';
 require_once __DIR__ . '/models/Notification.php';
 
 // Crée toutes les tables en instanciant les modèles
-new Student();
-new Teacher();
-new Project();
+// new Student();
+// new Teacher();
+// new Project();
+// new Admin();
 new Notification();
-new Admin();
 
 echo "Base de données initialisée avec succès!\n";

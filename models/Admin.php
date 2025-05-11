@@ -42,30 +42,45 @@ class Admin {
         $stmt = $this->pdo->prepare("INSERT INTO admins (username, password) VALUES (?, ?)");
         return $stmt->execute([
             $username,
-            password_hash($password, PASSWORD_DEFAULT)
+           $password
         ]);
     }
 
     /**
      * Gestion des enseignants
      */
-    public function createTeacher($username, $domains) {
+ public function findByUsername($username) {
+        $stmt = $this->pdo->prepare("SELECT * FROM admins WHERE username = :username");
+        $stmt->execute([':username' => $username]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+     public function findById(int $id): ?array
+{
+        $stmt = $this->pdo->prepare("
+            SELECT id, username
+            FROM admins 
+            WHERE id = :id
+        ");
+    $stmt->execute([':id' => $id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+}
+    public function createTeacher($username, $domains): mixed {
         return $this->teacherModel->create($username, $domains);
     }
 
-    public function updateTeacher($username, $domains) {
-        return $this->teacherModel->update($username, $domains);
-    }
+    // public function updateTeacher($username, $domains) {
+    //     return $this->teacherModel->update($username, $domains);
+    // }
 
-    public function deleteTeacher($id) {
-        // Vérifier que l'enseignant n'est pas affecté à des projets
-        $projects = $this->projectModel->getByTeacher($id);
-        if (!empty($projects)) {
-            throw new Exception("Impossible de supprimer : l'enseignant est affecté à des projets");
-        }
+    // public function deleteTeacher($id) {
+    //     // Vérifier que l'enseignant n'est pas affecté à des projets
+    //     $projects = $this->projectModel->getByTeacher($id);
+    //     if (!empty($projects)) {
+    //         throw new Exception("Impossible de supprimer : l'enseignant est affecté à des projets");
+    //     }
         
-        return $this->teacherModel->delete($id);
-    }
+    //     return $this->teacherModel->delete($id);
+    // }
 
     public function getAllTeachers() {
         return $this->teacherModel->getAll();
@@ -76,6 +91,7 @@ class Admin {
      */
     public function assignTeacherToProject($projectId, $teacherId) {
         $project = $this->projectModel->getById(id: $projectId);
+      
         if (!$project) {
             throw new Exception("Projet introuvable");
         }
@@ -85,40 +101,16 @@ class Admin {
             throw new Exception("Enseignant introuvable");
         }
 
-        // Vérifier la compatibilité des domaines
-        $teacherDomains = explode('/', $teacher['domains']);
-        $projectDomains = explode('/', $project['domains']);
-        
-        if (empty(array_intersect($teacherDomains, $projectDomains))) {
-            throw new Exception("L'enseignant n'a pas les compétences requises pour ce projet");
-        }
-
+       
         // Effectuer l'affectation
         $success = $this->projectModel->assignTeacher($projectId, $teacherId);
         
-        if ($success) {
-            // Notifier l'étudiant
-            $this->notificationModel->create(
-                $_SESSION['Student_id'],
-                "Votre projet '{$project['theme']}' a été affecté à {$teacher['username']}",
-                'student',
-                $projectId
-            );
-            
-            // Notifier l'enseignant
-            $this->notificationModel->create(
-                $_SESSION['Student_id'],
-                "Vous avez été assigné au projet '{$project['theme']}'",
-                'teacher',
-                $projectId
-            );
-        }
         
         return $success;
     }
 
     public function getPendingProjects() {
-        return $this->projectModel->getPendingProjects();
+       return $this->projectModel->getPendingProjects();
     }
 
     public function getProjectsByStatus($status) {
@@ -127,7 +119,7 @@ class Admin {
             throw new InvalidArgumentException("Statut de projet invalide");
         }
         
-        return $this->projectModel->getByStatus($status);
+      //  return $this->projectModel->getByStatus($status);
     }
 
     /**
@@ -142,15 +134,15 @@ class Admin {
     /**
      * Statistiques et rapports
      */
-    public function getDashboardStats() {
-        return [
-            'students' => $this->countStudentsByRole('student'),
-            'teachers' => $this->countStudentsByRole('teacher'),
-            'projects_pending' => $this->projectModel->countByStatus('en cours'),
-            'projects_assigned' => $this->projectModel->countByStatus('assigné'),
-            'notifications_unread' => $this->notificationModel->getUnreadCount(null, 'admin')
-        ];
-    }
+    // public function getDashboardStats() {
+    //     return [
+    //         'students' => $this->countStudentsByRole('student'),
+    //         'teachers' => $this->countStudentsByRole('teacher'),
+    //         'projects_pending' => $this->projectModel->countByStatus('en cours'),
+    //         'projects_assigned' => $this->projectModel->countByStatus('assigné'),
+    //         'notifications_unread' => $this->notificationModel->getUnreadCount(null, 'admin')
+    //     ];
+    // }
 
     private function countStudentsByRole($role) {
         $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM students WHERE role = ?");
@@ -166,6 +158,6 @@ class Admin {
     }
 
     public function getAdminNotifications($unreadOnly = false) {
-        return $this->notificationModel->getForStudent($_SESSION['admin_id'], 'admin', $unreadOnly);
+        return $this->notificationModel->getAll();
     }
 }

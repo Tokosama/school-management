@@ -18,6 +18,7 @@ class Project {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 student_id INTEGER NOT NULL,
                 teacher_id INTEGER,
+                student_name TEXT NOT NULL,
                 binome_name TEXT NOT NULL,
                 theme TEXT NOT NULL,
                 description TEXT,
@@ -60,30 +61,82 @@ class Project {
         return $domains;
     }
 
-    public function create($studentId, $binomeName, $theme, $description, $domains, $filePath) {
-        try {
-            $domains = $this->validateDomains($domains);
+public function create($studentId, $studentName, $binomeName, $theme, $description, $domains, $filePath)
+{
+    try {
+        $domains = $this->validateDomains($domains);
 
-            $stmt = $this->pdo->prepare("
-                INSERT INTO projects (
-                    student_id, binome_name, theme, description, domains, file_path
-                ) VALUES (
-                    :student_id, :binome_name, :theme, :description, :domains, :file_path
-                )
-            ");
-            return $stmt->execute([
-                ':student_id' => $studentId,
-                ':binome_name' => $binomeName,
-                ':theme' => $theme,
-                ':description' => $description,
-                ':domains' => $domains,
-                ':file_path' => $filePath
-            ]);
-        } catch (PDOException $e) {
-            // Handle PDO error here
-            return false;
-        }
+        $stmt = $this->pdo->prepare("
+            INSERT INTO projects (
+                student_id,
+                student_name,
+                binome_name,
+                theme,
+                description,
+                domains,
+                file_path,
+                status,
+                created_at,
+                updated_at
+            ) VALUES (
+                :student_id,
+                :student_name,
+                :binome_name,
+                :theme,
+                :description,
+                :domains,
+                :file_path,
+                'pending',
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+            )
+        ");
+
+        return $stmt->execute([
+            ':student_id'   => $studentId,
+            ':student_name' => $studentName,
+            ':binome_name'  => $binomeName,
+            ':theme'        => $theme,
+            ':description'  => $description,
+            ':domains'      => $domains,
+            ':file_path'    => $filePath
+        ]);
+    } catch (PDOException $e) {
+        // Tu peux logger l'erreur ici si besoin
+        return false;
     }
+}
+public function getPendingProjects() {
+    try {
+        $stmt = $this->pdo->prepare("
+            SELECT p.*, 
+                   u.username as student_name,
+                   p.binome_name,
+                   t.username as teacher_name
+            FROM projects p
+            LEFT JOIN students u ON p.student_id = u.id
+            LEFT JOIN teachers t ON p.teacher_id = t.id
+            WHERE p.status = 'pending'
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        // Tu peux logguer l'erreur ici si besoin
+        return false;
+    }
+}
+public function getPendingProject($studentId)
+{
+    $stmt = $this->pdo->prepare("
+        SELECT * FROM projects 
+        WHERE student_id = :student_id 
+        AND status = 'pending' 
+        LIMIT 1
+    ");
+    $stmt->execute([':student_id' => $studentId]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
 
     public function assignTeacher($projectId, $teacherId) {
         try {

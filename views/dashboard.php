@@ -1,10 +1,10 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['Student_id'])) {
-    header('Location: index.php?action=login');
-    exit();
-}
+// if (!isset($_SESSION['Student_id'])) {
+//     header('Location: index.php?action=login');
+//     exit();
+// }
 
 $Student_id = $_SESSION['Student_id'];
 

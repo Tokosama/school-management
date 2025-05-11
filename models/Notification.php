@@ -17,9 +17,8 @@ class Notification {
             CREATE TABLE IF NOT EXISTS notifications (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 student_id INTEGER NOT NULL,
-                project_id INTEGER,
+                project_id INTEGER NOT NULL,
                 message TEXT NOT NULL,
-                recipient_role TEXT NOT NULL,
                 is_read BOOLEAN NOT NULL DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (student_id) REFERENCES students(id),
@@ -31,20 +30,19 @@ class Notification {
     /**
      * Crée une nouvelle notification
      */
-    public function create($studentId, $message, $recipientRole = 'admin', $projectId = null) {
+    public function create($studentId, $projectId, $message) {
         $stmt = $this->pdo->prepare("
             INSERT INTO notifications (
-                student_id, project_id, message, recipient_role
+                student_id, project_id, message
             ) VALUES (
-                :student_id, :project_id, :message, :recipient_role
+                :student_id, :project_id, :message
             )
         ");
         
         return $stmt->execute([
             ':student_id' => $studentId,
             ':project_id' => $projectId,
-            ':message' => $message,
-            ':recipient_role' => $recipientRole
+            ':message' => $message
         ]);
     }
 
@@ -61,44 +59,13 @@ class Notification {
     }
 
     /**
-     * Récupère les notifications pour un utilisateur/rôle spécifique
-     */
-    public function getForStudent($studentId, $role, $unreadOnly = false) {
-        $sql = "
-            SELECT n.*, u.Studentname AS sender_name
-            FROM notifications n
-            JOIN Students u ON n.student_id = u.id
-            WHERE n.recipient_role = :role
-        ";
-        
-        $params = [':role' => $role];
-        
-        if ($role !== 'admin') {
-            $sql .= " AND (n.student_id = :student_id OR n.project_id IN (
-                        SELECT id FROM projects WHERE student_id = :student_id
-                    ))";
-            $params[':student_id'] = $studentId;
-        }
-        
-        if ($unreadOnly) {
-            $sql .= " AND n.is_read = 0";
-        }
-        
-        $sql .= " ORDER BY n.created_at DESC";
-        
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
      * Récupère les notifications liées à un projet spécifique
      */
     public function getForProject($projectId) {
         $stmt = $this->pdo->prepare("
-            SELECT n.*, u.Studentname AS sender_name
+            SELECT n.*, s.Studentname AS sender_name
             FROM notifications n
-            JOIN Students u ON n.student_id = u.id
+            JOIN students s ON n.student_id = s.id
             WHERE n.project_id = :project_id
             ORDER BY n.created_at DESC
         ");
@@ -107,8 +74,35 @@ class Notification {
     }
 
     /**
+     * Récupère les notifications liées à un étudiant
+     */
+    public function getForStudent($studentId) {
+        $stmt = $this->pdo->prepare("
+            SELECT n.*, p.name AS project_name
+            FROM notifications n
+            JOIN projects p ON n.project_id = p.id
+            WHERE n.student_id = :student_id
+            ORDER BY n.created_at DESC
+        ");
+        $stmt->execute([':student_id' => $studentId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Supprime une notification
      */
+    public function getAll() {
+    $stmt = $this->pdo->prepare("
+        SELECT n.*, s.username AS student_name, p.theme AS project_title
+        FROM notifications n
+        LEFT JOIN students s ON n.student_id = s.id
+        LEFT JOIN projects p ON n.project_id = p.id
+        ORDER BY n.created_at DESC
+    ");
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
     public function delete($notificationId) {
         $stmt = $this->pdo->prepare("
             DELETE FROM notifications 
@@ -117,42 +111,17 @@ class Notification {
         return $stmt->execute([':id' => $notificationId]);
     }
 
-    // Ajoutez cette méthode
-public function getForUser($userId, $role) {
-    $stmt = $this->pdo->prepare("
-        SELECT * FROM notifications 
-        WHERE user_id = :user_id AND recipient_role = :role
-        ORDER BY created_at DESC
-    ");
-    $stmt->execute([
-        ':user_id' => $userId,
-        ':role' => $role
-    ]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
     /**
-     * Récupère le nombre de notifications non lues
+     * Récupère le nombre de notifications non lues d’un étudiant
      */
-    public function getUnreadCount($studentId, $role) {
-        $sql = "
+    public function getUnreadCount($studentId) {
+        $stmt = $this->pdo->prepare("
             SELECT COUNT(*) AS count
             FROM notifications
-            WHERE recipient_role = :role
+            WHERE student_id = :student_id
             AND is_read = 0
-        ";
-        
-        $params = [':role' => $role];
-        
-        if ($role !== 'admin') {
-            $sql .= " AND (student_id = :student_id OR project_id IN (
-                        SELECT id FROM projects WHERE student_id = :student_id
-                    ))";
-            $params[':student_id'] = $studentId;
-        }
-        
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
+        ");
+        $stmt->execute([':student_id' => $studentId]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['count'] ?? 0;
     }

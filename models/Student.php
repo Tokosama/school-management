@@ -132,21 +132,21 @@ class Student {
         ]);
     }
 
-    public function findByEmail(string $email): ?array
+public function findById(int $id): ?array
 {
     $stmt = $this->pdo->prepare("
-        SELECT id, username, domains 
+        SELECT id, username, domains
         FROM students 
-        WHERE email = :email
+        WHERE id = :id
     ");
-    $stmt->execute([':email' => $email]);
+    $stmt->execute([':id' => $id]);
     return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 }
 
 public function findByStudentname(string $username): ?array
 {
     $stmt = $this->pdo->prepare("
-        SELECT id, username, domains 
+        SELECT id, username, domains,password
         FROM students 
         WHERE username = :username
     ");

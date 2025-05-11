@@ -1,9 +1,9 @@
 <?php
-require_once __DIR__ . '/../Models/Student.php';
-require_once __DIR__ . '/../Models/Teacher.php';
-require_once __DIR__ . '/../Models/Project.php';
-require_once __DIR__ . '/../Models/Notification.php';
-require_once __DIR__ . '/../Models/Admin.php';
+require_once __DIR__ . '/../models/Student.php';
+require_once __DIR__ . '/../models/Teacher.php';
+require_once __DIR__ . '/../models/Project.php';
+require_once __DIR__ . '/../models/Notification.php';
+require_once __DIR__ . '/../models/Admin.php';
 
 class AdminController
 {
@@ -16,7 +16,7 @@ class AdminController
 
     private function checkAdminAuth()
     {
-        if (!isset($_SESSION['id'])) {
+        if (!isset($_SESSION['student_id'])) {
             header('Location: /auth/login');
             exit;
         }
@@ -25,9 +25,8 @@ class AdminController
     public function dashboard()
     {
         $this->checkAdminAuth();
-        $stats = $this->adminModel->getDashboardStats();
         $notifications = $this->adminModel->getAdminNotifications(true);
-        require_once __DIR__ . '/../Views/admin/dashboard.php';
+        require_once __DIR__ . '/../views/admin/adminDashboard.php';
     }
 
     public function manageTeachers()
@@ -43,7 +42,7 @@ class AdminController
         $this->checkAdminAuth();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /admin/teachers');
+    require_once __DIR__ . '/../views/admin/createTeacher.php';
             exit;
         }
 
@@ -57,7 +56,7 @@ class AdminController
             $_SESSION['error'] = $e->getMessage();
         }
 
-        header('Location: /admin/teachers');
+            header('Location: index.php?action=createTeacher');
     }
 
     public function assignProjects()
@@ -65,7 +64,8 @@ class AdminController
         $this->checkAdminAuth();
         $pendingProjects = $this->adminModel->getPendingProjects();
         $teachers = $this->adminModel->getAllTeachers();
-        require_once __DIR__ . '/../Views/admin/assign_projects.php';
+        var_dump($teachers);
+        require_once __DIR__ . '/../views/admin/affectation.php';
     }
 
     public function processAssignment()
@@ -82,12 +82,15 @@ class AdminController
                 $_POST['project_id'],
                 $_POST['teacher_id']
             );
+            var_dump("tesssssssssssssssss");
             $_SESSION['success'] = 'Affectation réussie';
         } catch (Exception $e) {
+            var_dump("noooooooooooooooooooooooooooooooo");
+
             $_SESSION['error'] = $e->getMessage();
         }
 
-        header('Location: /admin/assign-projects');
+     header('Location: index.php?action=affectation');
     }
 
     public function markNotificationAsRead($notificationId)
